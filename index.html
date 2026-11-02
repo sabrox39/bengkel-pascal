@@ -209,7 +209,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 <script>
 const $=s=>document.querySelector(s);
 const KEY='pascal_cfg_v2';
-const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,user:'sabrok',pass:'nugroho12345',base:'pascal/trainer'};
+const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,user:'sabrok',pass:'Nugroho12345',base:'pascal/trainer'};
 let cfg={...DEF};try{cfg={...DEF,...JSON.parse(localStorage.getItem(KEY)||'{}')};if(!cfg.pass)cfg.pass=DEF.pass}catch(e){}
 let client=null,mqttUp=false,devOnline=false,lastTel=0,tel=null,cur='conn';
 
