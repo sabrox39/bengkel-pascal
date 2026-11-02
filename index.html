@@ -64,35 +64,19 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 <body>
 <div class="hazard"></div>
 <header>
-  <div class="brand" onclick="go(mqttUp?'dash':'conn')">
+  <div class="brand" onclick="go('dash')">
     <svg width="38" height="38" viewBox="0 0 40 40" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="20" r="7" fill="#facc15"/><path d="M20 3l3 5 5-2 1 6 6 1-2 5 5 3-5 3 2 5-6 1-1 6-5-2-3 5-3-5-5 2-1-6-6-1 2-5-5-3 5-3-2-5 6-1 1-6 5 2z" stroke-width="2" fill="none"/></svg>
     <div>Bengkel Pascal<small>Praktikum tekanan · kelas SMP</small></div>
   </div>
   <div class="spacer"></div>
   <span class="chip" id="chipMqtt">MQTT: terputus</span>
   <span class="chip" id="chipDev">Alat: -</span>
-  <button class="back" id="btnSet" style="display:none" onclick="go('set')">⚙ Pengaturan</button>
+  <button class="back" id="btnSet" onclick="go('set')">⚙ Pengaturan</button>
 </header>
 
 <main>
-<!-- KONEKSI -->
-<section class="view active" id="v-conn">
-  <div class="card conn c-orange">
-    <h1>🔌 Sambungkan Alat</h1>
-    <p class="sub">Masukkan data koneksi, lalu tekan Hubungkan.</p>
-    <label>Broker</label><input type="text" id="cHost">
-    <label>Port WebSocket</label><input type="number" id="cPort">
-    <label>Username</label><input type="text" id="cUser" autocomplete="username">
-    <label>Password</label><input type="password" id="cPass" autocomplete="current-password">
-    <label>Topik dasar</label><input type="text" id="cBase">
-    <div class="check"><input type="checkbox" id="cRem"><span>Ingat di browser ini (jangan dipakai di komputer umum)</span></div>
-    <button class="b-blue" id="btnConn" style="width:100%;margin-top:16px">Hubungkan</button>
-    <div class="err" id="connErr"></div>
-  </div>
-</section>
-
 <!-- DASHBOARD -->
-<section class="view" id="v-dash">
+<section class="view active" id="v-dash">
   <h1>🛠 Dashboard Sensor</h1>
   <p class="sub">Nilai terbaru dari semua sensor. Terakhir diperbarui: <b id="lastUp">-</b></p>
   <div class="grid">
@@ -169,8 +153,9 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 
     <div class="card c-green">
       <h2>🧱 Benda Padat</h2>
-      <p class="hint" style="margin:0 0 6px">P = F ÷ A &nbsp;·&nbsp; isi panjang × lebar sisi balok yang menempel</p>
-      <table id="sTab"><thead><tr><th>Sisi</th><th>Panjang (cm)</th><th>Lebar (cm)</th></tr></thead><tbody></tbody></table>
+      <p class="hint" style="margin:0 0 6px">P = F ÷ A &nbsp;·&nbsp; masukkan ukuran satu bidang benda yang menempel</p>
+      <label>Panjang bidang (cm)</label><input type="number" id="sP" min="0.1" step="0.1" value="4">
+      <label>Lebar bidang (cm)</label><input type="number" id="sL" min="0.1" step="0.1" value="4">
       <label>Percepatan gravitasi g (m/s²)</label><input type="number" id="sG" value="9.8" min="0.1" step="0.01">
       <label>Massa dari load cell (g)</label>
       <input type="text" id="sM" readonly value="—" style="background:#f1f5f9">
@@ -186,6 +171,17 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
   <div class="bar"><button class="back" onclick="go('dash')">← Dashboard</button></div>
   <h1>⚙ Pengaturan Alat</h1>
   <div class="grid two">
+    <div class="card c-orange">
+      <h2>🔌 Koneksi Sensor (MQTT)</h2>
+      <p class="hint" style="margin:0 0 8px">Koneksi berjalan otomatis saat dashboard dibuka. Ubah data berikut hanya jika konfigurasi broker berubah.</p>
+      <label>Broker</label><input type="text" id="cHost">
+      <label>Port WebSocket</label><input type="number" id="cPort">
+      <label>Username</label><input type="text" id="cUser" autocomplete="username">
+      <label>Password Sensor</label><input type="password" id="cPass" autocomplete="current-password">
+      <label>Topik dasar</label><input type="text" id="cBase">
+      <button class="b-blue" id="btnConn" style="width:100%;margin-top:14px">Simpan &amp; Sambungkan Ulang</button>
+      <div class="err" id="connErr"></div>
+    </div>
     <div class="card c-teal">
       <h2>Kalibrasi &amp; sistem</h2>
       <div style="display:flex;gap:6px;margin-bottom:8px"><span class="pill" id="sBme">BME280</span><span class="pill" id="sAds">ADS1115</span><span class="pill" id="sHx">HX711</span></div>
@@ -213,8 +209,8 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 <script>
 const $=s=>document.querySelector(s);
 const KEY='pascal_cfg_v2';
-const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,user:'sabrok',pass:'',base:'pascal/trainer',remember:false};
-let cfg={...DEF};try{cfg={...DEF,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){}
+const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,user:'sabrok',pass:'nugroho12345',base:'pascal/trainer'};
+let cfg={...DEF};try{cfg={...DEF,...JSON.parse(localStorage.getItem(KEY)||'{}')};if(!cfg.pass)cfg.pass=DEF.pass}catch(e){}
 let client=null,mqttUp=false,devOnline=false,lastTel=0,tel=null,cur='conn';
 
 const get=(o,p)=>p.split('.').reduce((a,k)=>a==null?null:a[k],o);
@@ -225,13 +221,12 @@ function log(m,c){const d=document.createElement('div');d.textContent=new Date()
 function chip(id,c,t){const e=$(id);e.className='chip '+c;e.textContent=t}
 function fmtUp(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return(h?h+' j ':'')+m+' mnt '+(s%60)+' dtk'}
 function go(v){
-  if(v!=='conn'&&!mqttUp){toast('Hubungkan alat dulu.',true);v='conn'}
   cur=v;document.querySelectorAll('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
-  $('#btnSet').style.display=mqttUp?'':'none';window.scrollTo(0,0);
+  $('#btnSet').style.display='';window.scrollTo(0,0);
 }
 
 /* ---- koneksi ---- */
-function fillForm(){$('#cHost').value=cfg.host;$('#cPort').value=cfg.port;$('#cUser').value=cfg.user;$('#cPass').value=cfg.pass;$('#cBase').value=cfg.base;$('#cRem').checked=cfg.remember}
+function fillForm(){$('#cHost').value=cfg.host;$('#cPort').value=cfg.port;$('#cUser').value=cfg.user;$('#cPass').value=cfg.pass;$('#cBase').value=cfg.base}
 function connect(){
   if(client){try{client.end(true)}catch(e){}}
   $('#connErr').textContent='';$('#btnConn').disabled=true;$('#btnConn').textContent='Menyambung…';
@@ -241,7 +236,7 @@ function connect(){
     mqttUp=true;chip('#chipMqtt','ok','MQTT: tersambung');log('Tersambung ke broker.','g');
     const b=cfg.base;client.subscribe([`${b}/status`,`${b}/telemetry`,`${b}/info`,`${b}/event`,`${b}/wifi/scan`],{qos:1});
     send('refresh','1');$('#btnConn').disabled=false;$('#btnConn').textContent='Hubungkan';
-    if(cur==='conn')go('dash');refreshUI();
+    refreshUI();
   });
   client.on('close',()=>{mqttUp=false;chip('#chipMqtt','bad','MQTT: terputus');refreshUI()});
   client.on('error',e=>{log('Error MQTT: '+e.message,'e');$('#connErr').textContent='Gagal tersambung: '+e.message+'. Periksa username, password, dan internet.';$('#btnConn').disabled=false;$('#btnConn').textContent='Hubungkan'});
@@ -298,18 +293,19 @@ $('#btnOil').onclick=()=>{
   <div class="big">P₁ = ${num(P1,1)} Pa</div><div class="big">P₂ = ${num(P2,1)} Pa</div>
   <div class="hint">≈ ${num(P1/1000,2)} kPa dan ${num(P2/1000,2)} kPa</div>`;
 };
-const sides=[[4,4],[4,6],[6,8],[8,10]];
-sides.forEach((s,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>Sisi ${i+1}</td><td><input type="number" class="sp" min="0.1" step="0.1" value="${s[0]}"></td><td><input type="number" class="sl" min="0.1" step="0.1" value="${s[1]}"></td>`;$('#sTab tbody').appendChild(tr)});
 $('#btnSol').onclick=()=>{
   const g0=getMass();if(g0==null)return;
-  const G=+$('#sG').value;if(!(G>0))return toast('Gravitasi harus lebih dari 0.',true);
-  const ps=[...document.querySelectorAll('.sp')],ls=[...document.querySelectorAll('.sl')];
-  for(let i=0;i<4;i++)if(!(+ps[i].value>0&&+ls[i].value>0))return toast(`Isi panjang dan lebar sisi ${i+1}.`,true);
-  const m=g0/1000,F=m*G;
-  let rows='';for(let i=0;i<4;i++){const A=(+ps[i].value)*(+ls[i].value)/1e4;rows+=`<tr><td>Sisi ${i+1}</td><td>${num(A*1e4,2)}</td><td><b>${num(F/A,1)}</b></td></tr>`}
+  const G=+$('#sG').value,panjang=+$('#sP').value,lebar=+$('#sL').value;
+  if(!(G>0&&panjang>0&&lebar>0))return toast('Gravitasi, panjang, dan lebar bidang harus lebih dari 0.',true);
+  const m=g0/1000,F=m*G,A=(panjang*lebar)/1e4,P=F/A;
   const r=$('#sRes');r.className='res show';r.style.setProperty('--c','var(--green)');
-  r.innerHTML=`<div class="rows"><div><span>Massa (m)</span><b>${num(m,4)} kg</b></div><div><span>Gaya F = m × g</span><b>${num(F,4)} N</b></div></div>
-  <table style="margin-top:8px"><thead><tr><th>Sisi</th><th>A (cm²)</th><th>P (Pa)</th></tr></thead><tbody>${rows}</tbody></table>`;
+  r.innerHTML=`<div class="rows">
+    <div><span>Massa (m)</span><b>${num(m,4)} kg</b></div>
+    <div><span>Gaya F = m × g</span><b>${num(F,4)} N</b></div>
+    <div><span>Luas bidang (A)</span><b>${num(panjang*lebar,2)} cm²</b></div>
+  </div>
+  <div class="big">Tekanan P = ${num(P,1)} Pa</div>
+  <div class="hint">Luas bidang kontak = ${num(A,6)} m²</div>`;
 };
 
 /* ---- kontrol ---- */
@@ -332,13 +328,13 @@ $('#btnWifi').onclick=()=>{const ssid=$('#newSsid').value.trim(),pass=$('#newPas
 
 /* ---- mulai ---- */
 $('#btnConn').onclick=()=>{
-  cfg={host:$('#cHost').value.trim(),port:+$('#cPort').value,user:$('#cUser').value.trim(),pass:$('#cPass').value,base:$('#cBase').value.trim().replace(/\/+$/,''),remember:$('#cRem').checked};
-  if(!cfg.host||!cfg.user||!cfg.pass||!cfg.base){$('#connErr').textContent='Lengkapi semua kolom.';return}
-  try{localStorage.setItem(KEY,JSON.stringify(cfg.remember?cfg:{...cfg,pass:''}))}catch(e){}
+  cfg={host:$('#cHost').value.trim(),port:+$('#cPort').value,user:$('#cUser').value.trim(),pass:$('#cPass').value,base:$('#cBase').value.trim().replace(/\/+$/,'')};
+  if(!cfg.host||!(cfg.port>0)||!cfg.user||!cfg.pass||!cfg.base){$('#connErr').textContent='Lengkapi semua kolom koneksi dengan benar.';return}
+  try{localStorage.setItem(KEY,JSON.stringify(cfg))}catch(e){}
   connect();
 };
 fillForm();refreshUI();
-if(cfg.remember&&cfg.pass)connect();
+connect();
 </script>
 </body>
 </html>
