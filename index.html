@@ -55,44 +55,25 @@ input:focus{outline:3px solid #bfdbfe}
 .log{max-height:160px;overflow:auto;font:12.5px ui-monospace,Menlo,monospace}.log .e{color:var(--red)}.log .g{color:var(--green)}
 table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2px dotted var(--line);text-align:right}th:first-child,td:first-child{text-align:left}th{font-size:12.5px;color:var(--muted)}
 .toast{position:fixed;right:14px;bottom:14px;display:grid;gap:8px;z-index:50}.toast div{background:var(--text);color:#fff;padding:10px 14px;border-radius:10px;max-width:320px}.toast .e{background:var(--red)}
-.conn{max-width:430px;margin:20px auto}
 .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
-.check{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px}.check input{width:auto}
-.err{color:var(--red);font-weight:700;margin-top:10px;min-height:20px}
 </style>
 </head>
 <body>
 <div class="hazard"></div>
 <header>
-  <div class="brand" onclick="go(mqttUp?'dash':'conn')">
+  <div class="brand" onclick="go('dash')">
     <svg width="38" height="38" viewBox="0 0 40 40" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="20" r="7" fill="#facc15"/><path d="M20 3l3 5 5-2 1 6 6 1-2 5 5 3-5 3 2 5-6 1-1 6-5-2-3 5-3-5-5 2-1-6-6-1 2-5-5-3 5-3-2-5 6-1 1-6 5 2z" stroke-width="2" fill="none"/></svg>
     <div>Bengkel Pascal<small>Praktikum tekanan · kelas SMP</small></div>
   </div>
   <div class="spacer"></div>
   <span class="chip" id="chipMqtt">MQTT: terputus</span>
   <span class="chip" id="chipDev">Alat: -</span>
-  <button class="back" id="btnSet" style="display:none" onclick="go('set')">⚙ Pengaturan</button>
+  <button class="back" id="btnSet" onclick="go('set')">⚙ Pengaturan</button>
 </header>
 
 <main>
-<!-- KONEKSI -->
-<section class="view active" id="v-conn">
-  <div class="card conn c-orange">
-    <h1>🔌 Sambungkan Alat</h1>
-    <p class="sub">Masukkan data koneksi, lalu tekan Hubungkan.</p>
-    <label>Broker</label><input type="text" id="cHost">
-    <label>Port WebSocket</label><input type="number" id="cPort">
-    <label>Username</label><input type="text" id="cUser" autocomplete="username">
-    <label>Password</label><input type="password" id="cPass" autocomplete="current-password">
-    <label>Topik dasar</label><input type="text" id="cBase">
-    <div class="check"><input type="checkbox" id="cRem"><span>Ingat di browser ini (jangan dipakai di komputer umum)</span></div>
-    <button class="b-blue" id="btnConn" style="width:100%;margin-top:16px">Hubungkan</button>
-    <div class="err" id="connErr"></div>
-  </div>
-</section>
-
 <!-- DASHBOARD -->
-<section class="view" id="v-dash">
+<section class="view active" id="v-dash">
   <h1>🛠 Dashboard Sensor</h1>
   <p class="sub">Nilai terbaru dari semua sensor. Terakhir diperbarui: <b id="lastUp">-</b></p>
   <div class="grid">
@@ -160,7 +141,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
       <p class="hint" style="margin:0 0 6px">P = F ÷ A &nbsp;·&nbsp; F = m × g &nbsp;·&nbsp; A = π × d² ÷ 4</p>
       <label>Diameter piston 1 (mm)</label><input type="number" id="oD1" value="33" min="1" step="0.1">
       <label>Diameter piston 2 (mm)</label><input type="number" id="oD2" value="29" min="1" step="0.1">
-      <label>Percepatan gravitasi g (m/s²)</label><input type="number" id="oG" value="9.8" min="0.1" step="0.01">
+      <label>Percepatan gravitasi g (m/s²)</label><input type="number" id="oG" value="9.81" min="0.1" step="0.01">
       <label>Massa dari load cell (g)</label>
       <input type="text" id="oM" readonly value="—" style="background:#f1f5f9">
       <button class="b-blue ctl" id="btnOil" style="width:100%;margin-top:14px">Calculate</button>
@@ -169,9 +150,10 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 
     <div class="card c-green">
       <h2>🧱 Benda Padat</h2>
-      <p class="hint" style="margin:0 0 6px">P = F ÷ A &nbsp;·&nbsp; isi panjang × lebar sisi balok yang menempel</p>
-      <table id="sTab"><thead><tr><th>Sisi</th><th>Panjang (cm)</th><th>Lebar (cm)</th></tr></thead><tbody></tbody></table>
-      <label>Percepatan gravitasi g (m/s²)</label><input type="number" id="sG" value="9.8" min="0.1" step="0.01">
+      <p class="hint" style="margin:0 0 6px">P = F ÷ A &nbsp;·&nbsp; A = panjang × lebar bidang yang menempel</p>
+      <label>Panjang bidang yang menempel (cm)</label><input type="number" id="sP" value="4" min="0.1" step="0.1">
+      <label>Lebar bidang yang menempel (cm)</label><input type="number" id="sL" value="4" min="0.1" step="0.1">
+      <label>Percepatan gravitasi g (m/s²)</label><input type="number" id="sG" value="9.81" min="0.1" step="0.01">
       <label>Massa dari load cell (g)</label>
       <input type="text" id="sM" readonly value="—" style="background:#f1f5f9">
       <button class="b-green ctl" id="btnSol" style="width:100%;margin-top:14px">Calculate</button>
@@ -212,10 +194,16 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 
 <script>
 const $=s=>document.querySelector(s);
-const KEY='pascal_cfg_v2';
-const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,user:'sabrok',pass:'',base:'pascal/trainer',remember:false};
-let cfg={...DEF};try{cfg={...DEF,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){}
-let client=null,mqttUp=false,devOnline=false,lastTel=0,tel=null,cur='conn';
+
+/* ---- konfigurasi koneksi (otomatis) ---- */
+const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,user:'sabrok',pass:'ISI_PASSWORD_MQTT_WEB',base:'pascal/trainer'};
+const cfg={...DEF};
+let client=null,mqttUp=false,devOnline=false,lastTel=0,tel=null,cur='dash';
+
+/* ---- sinkron layar LCD <-> halaman web ---- */
+let lastScreen=null,screenLockUntil=0;
+const VIEW2SCR={dash:'home',balon:'balon',hid:'hidrolik'};
+const SCR2VIEW={home:'dash',balon:'balon',hidrolik:'hid',aktuator:'hid',hasil_sisi:'hid'};
 
 const get=(o,p)=>p.split('.').reduce((a,k)=>a==null?null:a[k],o);
 const fmt=(v,d=0,s=1)=>(v==null||isNaN(v))?'—':(Number(v)*s).toFixed(d);
@@ -224,27 +212,25 @@ function toast(m,e){const d=document.createElement('div');if(e)d.className='e';d
 function log(m,c){const d=document.createElement('div');d.textContent=new Date().toLocaleTimeString('id-ID')+'  '+m;if(c)d.className=c;$('#log').prepend(d);while($('#log').children.length>100)$('#log').lastChild.remove()}
 function chip(id,c,t){const e=$(id);e.className='chip '+c;e.textContent=t}
 function fmtUp(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return(h?h+' j ':'')+m+' mnt '+(s%60)+' dtk'}
-function go(v){
-  if(v!=='conn'&&!mqttUp){toast('Hubungkan alat dulu.',true);v='conn'}
+
+function go(v,sync=true){
   cur=v;document.querySelectorAll('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
-  $('#btnSet').style.display=mqttUp?'':'none';window.scrollTo(0,0);
+  window.scrollTo(0,0);
+  if(sync&&mqttUp&&VIEW2SCR[v]){screenLockUntil=Date.now()+2000;send('screen',VIEW2SCR[v])}
 }
 
 /* ---- koneksi ---- */
-function fillForm(){$('#cHost').value=cfg.host;$('#cPort').value=cfg.port;$('#cUser').value=cfg.user;$('#cPass').value=cfg.pass;$('#cBase').value=cfg.base;$('#cRem').checked=cfg.remember}
 function connect(){
   if(client){try{client.end(true)}catch(e){}}
-  $('#connErr').textContent='';$('#btnConn').disabled=true;$('#btnConn').textContent='Menyambung…';
   chip('#chipMqtt','warn','MQTT: menyambung…');
   client=mqtt.connect(`wss://${cfg.host}:${cfg.port}/mqtt`,{username:cfg.user,password:cfg.pass,clientId:'web-'+Math.random().toString(16).slice(2,10),reconnectPeriod:3000,connectTimeout:10000,clean:true,keepalive:30});
   client.on('connect',()=>{
     mqttUp=true;chip('#chipMqtt','ok','MQTT: tersambung');log('Tersambung ke broker.','g');
     const b=cfg.base;client.subscribe([`${b}/status`,`${b}/telemetry`,`${b}/info`,`${b}/event`,`${b}/wifi/scan`],{qos:1});
-    send('refresh','1');$('#btnConn').disabled=false;$('#btnConn').textContent='Hubungkan';
-    if(cur==='conn')go('dash');refreshUI();
+    send('refresh','1');refreshUI();
   });
   client.on('close',()=>{mqttUp=false;chip('#chipMqtt','bad','MQTT: terputus');refreshUI()});
-  client.on('error',e=>{log('Error MQTT: '+e.message,'e');$('#connErr').textContent='Gagal tersambung: '+e.message+'. Periksa username, password, dan internet.';$('#btnConn').disabled=false;$('#btnConn').textContent='Hubungkan'});
+  client.on('error',e=>log('Error MQTT: '+e.message+' (cek username/password)','e'));
   client.on('message',onMsg);
 }
 function send(sub,p){
@@ -256,7 +242,11 @@ function onMsg(topic,buf){
   if(sub==='status'){devOnline=text==='online';chip('#chipDev',devOnline?'ok':'bad','Alat: '+(devOnline?'online':'offline'));log('Alat '+(devOnline?'online':'offline'),devOnline?'g':'e');refreshUI();return}
   let j;try{j=JSON.parse(text)}catch(e){return}
   if(sub==='telemetry'){tel=j;lastTel=Date.now();renderTel(j)}
-  else if(sub==='info'){$('#iFw').textContent=j.fw+' · '+j.mac;$('#pumpMax').textContent=j.pump_max_s||'—'}
+  else if(sub==='info'){
+    $('#iFw').textContent=j.fw+' · '+j.mac;$('#pumpMax').textContent=j.pump_max_s||'—';
+    if(j.piston){$('#oD1').value=j.piston.d1_mm;$('#oD2').value=j.piston.d2_mm}
+    if(j.blocks&&j.blocks[0]){$('#sP').value=j.blocks[0].l;$('#sL').value=j.blocks[0].w}
+  }
   else if(sub==='event'){toast(j.msg,!j.ok);log(`[${j.type}] ${j.msg}`,j.ok?'g':'e')}
   else if(sub==='wifi/scan')renderNets(j.networks||[]);
 }
@@ -272,6 +262,13 @@ function renderTel(t){
   [['#sBme',t.sensors.bme],['#sAds',t.sensors.ads],['#sHx',t.sensors.hx]].forEach(([id,ok])=>{const e=$(id);e.className='pill '+(ok?'ok':'bad');e.textContent=e.textContent.split(' ')[0]+(ok?' ✓':' ✗')});
   const m=fmt(t.load.g,1)+' g';$('#oM').value=m;$('#sM').value=m;
   $('#lastUp').textContent=new Date().toLocaleTimeString('id-ID');
+
+  // sinkron: halaman web mengikuti layar LCD saat layar LCD berubah
+  if(t.screen!==lastScreen){
+    const first=lastScreen===null;lastScreen=t.screen;
+    const v=SCR2VIEW[t.screen];
+    if(!first&&Date.now()>screenLockUntil&&v&&v!==cur&&cur!=='set')go(v,false);
+  }
 }
 function renderNets(list){
   const box=$('#nets');box.hidden=false;box.innerHTML='';
@@ -298,18 +295,15 @@ $('#btnOil').onclick=()=>{
   <div class="big">P₁ = ${num(P1,1)} Pa</div><div class="big">P₂ = ${num(P2,1)} Pa</div>
   <div class="hint">≈ ${num(P1/1000,2)} kPa dan ${num(P2/1000,2)} kPa</div>`;
 };
-const sides=[[4,4],[4,6],[6,8],[8,10]];
-sides.forEach((s,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>Sisi ${i+1}</td><td><input type="number" class="sp" min="0.1" step="0.1" value="${s[0]}"></td><td><input type="number" class="sl" min="0.1" step="0.1" value="${s[1]}"></td>`;$('#sTab tbody').appendChild(tr)});
 $('#btnSol').onclick=()=>{
   const g0=getMass();if(g0==null)return;
-  const G=+$('#sG').value;if(!(G>0))return toast('Gravitasi harus lebih dari 0.',true);
-  const ps=[...document.querySelectorAll('.sp')],ls=[...document.querySelectorAll('.sl')];
-  for(let i=0;i<4;i++)if(!(+ps[i].value>0&&+ls[i].value>0))return toast(`Isi panjang dan lebar sisi ${i+1}.`,true);
-  const m=g0/1000,F=m*G;
-  let rows='';for(let i=0;i<4;i++){const A=(+ps[i].value)*(+ls[i].value)/1e4;rows+=`<tr><td>Sisi ${i+1}</td><td>${num(A*1e4,2)}</td><td><b>${num(F/A,1)}</b></td></tr>`}
+  const G=+$('#sG').value,p=+$('#sP').value,l=+$('#sL').value;
+  if(!(G>0))return toast('Gravitasi harus lebih dari 0.',true);
+  if(!(p>0&&l>0))return toast('Isi panjang dan lebar benda.',true);
+  const m=g0/1000,F=m*G,A=p*l/1e4,P=F/A;
   const r=$('#sRes');r.className='res show';r.style.setProperty('--c','var(--green)');
-  r.innerHTML=`<div class="rows"><div><span>Massa (m)</span><b>${num(m,4)} kg</b></div><div><span>Gaya F = m × g</span><b>${num(F,4)} N</b></div></div>
-  <table style="margin-top:8px"><thead><tr><th>Sisi</th><th>A (cm²)</th><th>P (Pa)</th></tr></thead><tbody>${rows}</tbody></table>`;
+  r.innerHTML=`<div class="rows"><div><span>Massa (m)</span><b>${num(m,4)} kg</b></div><div><span>Gaya F = m × g</span><b>${num(F,4)} N</b></div><div><span>Luas A = p × l</span><b>${num(p*l,2)} cm²</b></div></div>
+  <div class="big">P = ${num(P,1)} Pa</div><div class="hint">≈ ${num(P/1000,2)} kPa</div>`;
 };
 
 /* ---- kontrol ---- */
@@ -331,14 +325,7 @@ $('#btnWifi').onclick=()=>{const ssid=$('#newSsid').value.trim(),pass=$('#newPas
   if(confirm(`Ganti WiFi alat ke "${ssid}"?`)){send('wifi',{ssid,pass});log(`Perintah ganti WiFi ke "${ssid}" dikirim.`)}};
 
 /* ---- mulai ---- */
-$('#btnConn').onclick=()=>{
-  cfg={host:$('#cHost').value.trim(),port:+$('#cPort').value,user:$('#cUser').value.trim(),pass:$('#cPass').value,base:$('#cBase').value.trim().replace(/\/+$/,''),remember:$('#cRem').checked};
-  if(!cfg.host||!cfg.user||!cfg.pass||!cfg.base){$('#connErr').textContent='Lengkapi semua kolom.';return}
-  try{localStorage.setItem(KEY,JSON.stringify(cfg.remember?cfg:{...cfg,pass:''}))}catch(e){}
-  connect();
-};
-fillForm();refreshUI();
-if(cfg.remember&&cfg.pass)connect();
+refreshUI();connect();
 </script>
 </body>
 </html>
