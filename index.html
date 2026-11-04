@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bengkel Pascal – Dashboard Praktikum</title>
+<title>Pressure Lab Kit – Dashboard Praktikum</title>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <style>
 :root{--text:#1e293b;--muted:#64748b;--line:#e2e8f0;
@@ -57,6 +57,9 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 .toast{position:fixed;right:14px;bottom:14px;display:grid;gap:8px;z-index:50}.toast div{background:var(--text);color:#fff;padding:10px 14px;border-radius:10px;max-width:320px}.toast .e{background:var(--red)}
 .conn{max-width:430px;margin:20px auto}
 .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+.stopwatch{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.stopwatch .time{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.stopwatch .sw-actions{display:flex;gap:8px;align-items:center}
 .check{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px}.check input{width:auto}
 .err{color:var(--red);font-weight:700;margin-top:10px;min-height:20px}
 </style>
@@ -66,7 +69,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 <header>
   <div class="brand" onclick="go('dash')">
     <svg width="38" height="38" viewBox="0 0 40 40" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="20" r="7" fill="#facc15"/><path d="M20 3l3 5 5-2 1 6 6 1-2 5 5 3-5 3 2 5-6 1-1 6-5-2-3 5-3-5-5 2-1-6-6-1 2-5-5-3 5-3-2-5 6-1 1-6 5 2z" stroke-width="2" fill="none"/></svg>
-    <div>Bengkel Pascal<small>Praktikum tekanan · kelas SMP</small></div>
+    <div>Pressure Lab Kit<small>Praktikum tekanan · kelas SMP</small></div>
   </div>
   <div class="spacer"></div>
   <span class="chip" id="chipMqtt">MQTT: terputus</span>
@@ -81,8 +84,6 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
   <p class="sub">Nilai terbaru dari semua sensor. Terakhir diperbarui: <b id="lastUp">-</b></p>
   <div class="grid">
     <div class="card val c-blue"><div class="t">⚖ Massa (load cell)</div><span class="v" data-k="load.g" data-d="1">—</span><span class="u">g</span></div>
-    <div class="card val c-orange"><div class="t">💪 Gaya (F = m × g)</div><span class="v" data-k="load.n" data-d="3">—</span><span class="u">N</span></div>
-    <div class="card val c-green"><div class="t">🛢 Tekanan piston</div><span class="v" data-k="piston.pa" data-d="2" data-s="0.001">—</span><span class="u">kPa</span></div>
     <div class="card val c-purple"><div class="t">📟 Pressure transmitter</div><span class="v" data-k="tx.psi" data-d="1">—</span><span class="u">PSI</span></div>
     <div class="card val c-pink"><div class="t">🌬 Tekanan udara</div><span class="v" data-k="bme.p" data-d="1">—</span><span class="u">hPa</span></div>
     <div class="card val c-teal"><div class="t">🌡 Suhu</div><span class="v" data-k="bme.t" data-d="1">—</span><span class="u">°C</span></div>
@@ -108,12 +109,20 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
   <div class="grid">
     <div class="card val c-pink"><div class="t">🌬 Tekanan udara</div><span class="v" data-k="bme.p" data-d="1">—</span><span class="u">hPa</span></div>
     <div class="card val c-teal"><div class="t">🌡 Suhu</div><span class="v" data-k="bme.t" data-d="1">—</span><span class="u">°C</span></div>
-    <div class="card val c-purple"><div class="t">📟 Transmitter</div><span class="v" data-k="tx.kpa" data-d="1">—</span><span class="u">kPa</span></div>
-    <div class="card val c-orange"><div class="t">📟 Transmitter</div><span class="v" data-k="tx.psi" data-d="2">—</span><span class="u">PSI</span></div>
   </div>
   <div class="card c-green" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:14px">
     <div><h2 style="margin:0">💨 Pompa udara</h2><div class="hint" style="margin:0">Mati otomatis setelah <span id="pumpMax">120</span> detik</div></div>
     <button class="sw ctl" id="swPump" aria-label="Pompa udara"></button>
+  </div>
+  <div class="card c-blue stopwatch">
+    <div>
+      <h2 style="margin:0">⏱ Stopwatch pompa</h2>
+      <div class="time" id="pumpStopwatch">00:00.0</div>
+      <div class="hint" id="pumpTimerState" style="margin:0">Stopwatch mulai saat pompa menyala.</div>
+    </div>
+    <div class="sw-actions">
+      <button class="b-orange" id="btnResetStopwatch" type="button">↺ Reset</button>
+    </div>
   </div>
 </section>
 
@@ -213,6 +222,38 @@ const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,
 let cfg={...DEF};try{cfg={...DEF,...JSON.parse(localStorage.getItem(KEY)||'{}')};if(!cfg.pass)cfg.pass=DEF.pass}catch(e){}
 let client=null,mqttUp=false,devOnline=false,lastTel=0,tel=null,cur='conn';
 
+// Stopwatch menghitung hanya selama pompa terdeteksi menyala.
+let pumpRunning=false,pumpStartedAt=null,pumpElapsedMs=0;
+let pumpWatchInterval=null;
+function stopwatchElapsed(){
+  return pumpElapsedMs+(pumpRunning&&pumpStartedAt!==null?Date.now()-pumpStartedAt:0);
+}
+function renderStopwatch(){
+  const total=Math.max(0,stopwatchElapsed());
+  const tenths=Math.floor(total/100);
+  const minutes=Math.floor(tenths/600);
+  const seconds=Math.floor((tenths%600)/10);
+  const tenth=tenths%10;
+  $('#pumpStopwatch').textContent=String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0')+'.'+tenth;
+  $('#pumpTimerState').textContent=pumpRunning?'Pompa menyala · stopwatch berjalan':'Pompa mati · stopwatch berhenti';
+}
+function updatePumpStopwatch(isOn){
+  if(isOn&&!pumpRunning){
+    pumpRunning=true;
+    pumpStartedAt=Date.now();
+  }else if(!isOn&&pumpRunning){
+    pumpElapsedMs+=Date.now()-pumpStartedAt;
+    pumpRunning=false;
+    pumpStartedAt=null;
+  }
+  renderStopwatch();
+}
+function resetPumpStopwatch(){
+  pumpElapsedMs=0;
+  pumpStartedAt=pumpRunning?Date.now():null;
+  renderStopwatch();
+}
+
 const get=(o,p)=>p.split('.').reduce((a,k)=>a==null?null:a[k],o);
 const fmt=(v,d=0,s=1)=>(v==null||isNaN(v))?'—':(Number(v)*s).toFixed(d);
 const num=(v,d=3)=>{const n=+v;return isFinite(n)?(Math.abs(n)>=1e6||(n!==0&&Math.abs(n)<0.01)?n.toExponential(2):+n.toFixed(d)):'—'};
@@ -263,6 +304,7 @@ function renderTel(t){
   $('#wSsid').textContent=t.wifi.ssid||'—';
   $('#iUp').textContent=fmtUp(t.up);
   $('#swPump').classList.toggle('on',!!t.pump);
+  updatePumpStopwatch(!!t.pump);
   const ss=$('#servoState');ss.textContent=t.servo.run?(t.servo.dir>0?'naik…':'turun…'):'berhenti';ss.className='pill'+(t.servo.run?' ok':'');
   [['#sBme',t.sensors.bme],['#sAds',t.sensors.ads],['#sHx',t.sensors.hx]].forEach(([id,ok])=>{const e=$(id);e.className='pill '+(ok?'ok':'bad');e.textContent=e.textContent.split(' ')[0]+(ok?' ✓':' ✗')});
   const m=fmt(t.load.g,1)+' g';$('#oM').value=m;$('#sM').value=m;
@@ -310,6 +352,9 @@ $('#btnSol').onclick=()=>{
 
 /* ---- kontrol ---- */
 $('#swPump').onclick=()=>send('pump',tel&&tel.pump?'off':'on');
+$('#btnResetStopwatch').onclick=resetPumpStopwatch;
+pumpWatchInterval=setInterval(renderStopwatch,100);
+renderStopwatch();
 const dur=()=>+$('#dur').value;
 $('#dur').oninput=()=>$('#durLbl').textContent=dur();
 $('#btnUp').onclick=()=>send('actuator',{dir:'up',ms:dur()});
