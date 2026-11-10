@@ -62,6 +62,46 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 .stopwatch .sw-actions{display:flex;gap:8px;align-items:center}
 .check{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px}.check input{width:auto}
 .err{color:var(--red);font-weight:700;margin-top:10px;min-height:20px}
+
+/* ===== Pressure Lab Kit: Candy Classroom Edition ===== */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+:root{--text:#34314f;--muted:#85839b;--line:#e9e5f2;--blue:#6c91ee;--orange:#f5a76c;--green:#58bda3;--pink:#f087ad;--purple:#a48bea;--yellow:#ffdb85;--teal:#50b9b8;--red:#ef7986}
+body{font:15px/1.6 'Nunito','Trebuchet MS',sans-serif;background:radial-gradient(circle at 9% 17%,#ffe6f0 0,transparent 24%),radial-gradient(circle at 92% 26%,#e8e4ff 0,transparent 28%),linear-gradient(135deg,#fffbfd,#f8f9ff 55%,#f2fffc);min-height:100vh}
+.hazard{height:8px;background:repeating-linear-gradient(90deg,#f7a8c7 0 55px,#ffdbaa 55px 110px,#aedfd9 110px 165px,#c8bbf6 165px 220px)}
+header{background:rgba(255,255,255,.91);backdrop-filter:blur(18px);border-bottom:1px solid #f2ebf5;box-shadow:0 6px 26px #9b91ba12;padding:15px clamp(16px,4vw,44px)}
+.brand{font-size:21px;letter-spacing:-.5px}.brand svg{background:#fff3c5;border-radius:16px;padding:6px;width:49px;height:49px;box-shadow:0 5px 12px #f1d48e44}.brand small{font-size:12px;color:#928aa0;letter-spacing:0}
+main{max-width:1200px;padding:26px 22px 80px}
+h1{font-size:clamp(26px,3vw,34px);font-weight:900;letter-spacing:-.8px}h2{font-size:19px;font-weight:900;letter-spacing:-.3px}.sub{font-size:14px}
+.chip{border:1px solid #ede9f5;background:#faf9fe;padding:7px 12px;box-shadow:0 3px 10px #9288ad10}.chip.ok{background:#e8faf1;border-color:#b7ead7;color:#239878}.chip.bad{background:#fff0f1;border-color:#ffd5da;color:#dc6978}.chip.warn{background:#fff7e9;border-color:#ffe2b5;color:#bd8b41}
+.card{border:1px solid #eee9f5;border-radius:24px;background:#fff;box-shadow:0 8px 22px #8d86a01a,0 2px 0 #ffffff;--c:var(--purple);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;padding:21px}
+.card:hover{box-shadow:0 14px 30px #8d86a024}
+.grid{gap:19px}.grid.two{gap:20px}
+.val{min-height:148px;display:flex;flex-wrap:wrap;align-content:center;align-items:baseline;gap:2px;background:linear-gradient(145deg,#fff 20%,color-mix(in srgb,var(--c) 13%,white))}
+.val::after{content:'✦';position:absolute;top:7px;right:18px;font-size:27px;opacity:.32;color:var(--c)}
+.val .t{width:100%;font-size:14px;font-weight:900;color:var(--c);margin-bottom:12px}.val .v{font-size:clamp(30px,3vw,38px);font-weight:900;letter-spacing:-1.4px}.val .u{font-weight:800;color:#928da5}
+.c-blue{--c:var(--blue)}.c-orange{--c:var(--orange)}.c-green{--c:var(--green)}.c-pink{--c:var(--pink)}.c-purple{--c:var(--purple)}.c-teal{--c:var(--teal)}.c-yellow{--c:#deb25c}
+.menu{min-height:164px;border:1px solid #f0e8f4;padding:23px;gap:22px;background:linear-gradient(125deg,#fff,#fff7fb);box-shadow:0 10px 25px #ad9bb326}
+.menu.c-blue{background:linear-gradient(125deg,#fff,#f1f5ff)}
+.menu:hover{transform:translateY(-5px);box-shadow:0 18px 32px #ad9bb338}
+.menu svg{width:90px;height:90px;filter:drop-shadow(0 6px 8px #9e91a036);transition:transform .25s}.menu:hover svg{transform:rotate(-7deg) scale(1.1)}
+.menu b{font-size:23px;font-weight:900}.menu span{font-size:14px}.menu:after{content:'➜';margin-left:auto;color:var(--c);font-size:25px;font-weight:900}
+button{border:1px solid #e6e0f0;border-radius:15px;box-shadow:0 4px 0 #ddd5e9;color:var(--text);padding:11px 17px;transition:transform .15s,box-shadow .15s,filter .15s}
+button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 0 #ddd5e9;filter:brightness(1.03)}button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #ddd5e9}
+.b-blue{background:#7d9bf1;color:white;border-color:#7191ec;box-shadow:0 4px 0 #5576ce}.b-green{background:#69c7ac;color:#fff;border-color:#58bda3;box-shadow:0 4px 0 #39a18a}.b-orange{background:#f9b477;color:#fff;border-color:#ec9e62;box-shadow:0 4px 0 #d9894b}.b-red{background:#f08b98;color:#fff;border-color:#e87e8b;box-shadow:0 4px 0 #cf6875}.b-purple{background:#a48bea;color:#fff;border-color:#977cdd;box-shadow:0 4px 0 #7960be}.b-yellow{background:#ffdb85}
+.back{background:#fff;border:1px solid #eee6f4;box-shadow:0 4px 0 #e6deee}
+input[type=text],input[type=password],input[type=number]{border:1.5px solid #e5e0f1;border-radius:13px;background:#fcfbff;padding:11px 12px;color:var(--text)}input:focus{outline:3px solid #dfd6ff;border-color:#b3a4e9}
+label{font-weight:900;color:#67617e}.rows>div{border-bottom:1px dashed #e8e3f0;padding:9px 0}.res{background:#fbfaff;border:1px dashed var(--c);border-radius:17px;padding:15px}.res .big{font-size:22px}
+.sw{width:76px;height:42px;background:#e8e6f2;border:2px solid #d9d4e6;box-shadow:none}.sw:after{width:30px;height:30px;top:4px;left:4px;border:0;box-shadow:0 3px 8px #756b9b33}.sw.on{background:#6dcfb2;border-color:#69c8ad}.sw.on:after{left:39px}.pill{border:1px solid #e9e5f2;background:#f8f6fc;padding:5px 11px}.pill.ok{background:#ebfff7;border-color:#a9e5d0;color:#239878}.pill.bad{background:#fff0f2;border-color:#f7c7cf;color:#d96a79}
+.stopwatch .time{background:#f0f5ff;color:#6b86d8;border:1px solid #dfe8ff;padding:9px 16px;border-radius:15px;display:inline-block;margin-top:7px;font-size:36px}
+.nets{border-color:#ede9f5;border-radius:16px}.nets button{box-shadow:none}input[type=range]{accent-color:#a48bea}.toast div{background:#48415f;border-radius:15px;box-shadow:0 8px 28px #4d3e6029}
+.hero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:27px 31px;margin-bottom:25px;background:linear-gradient(105deg,#ffecf3 0%,#f7efff 55%,#ecf8ff 100%);border:1px solid #f5e7fa;border-radius:27px}
+.hero:before,.hero:after{content:'✦';position:absolute;color:#e5a2bc;font-size:46px;opacity:.5}.hero:before{left:49%;top:-23px}.hero:after{right:10%;bottom:-29px;color:#a6abd9}.hero h1{margin:0 0 7px}.hero .sub{margin:0;max-width:520px;color:#79738a}.hero-tag{display:inline-flex;border-radius:100px;background:#fff;padding:5px 13px;color:#d477a6;font-size:12px;font-weight:900;margin-bottom:13px;box-shadow:0 3px 8px #d0b1c52b}.hero-art{font-size:clamp(70px,10vw,112px);line-height:1;filter:drop-shadow(0 10px 6px #ba9dab35);animation:floatCute 3.5s ease-in-out infinite;white-space:nowrap;user-select:none}
+.section-head{margin:30px 0 15px;display:flex;align-items:center;gap:8px}.section-head:after{content:'';height:2px;flex:1;background:linear-gradient(90deg,#eeddeb,transparent)}
+.mini-note{display:inline-block;background:#fff6dc;border-radius:15px;padding:8px 12px;font-size:12px;color:#968053;font-weight:800;margin-top:16px}
+@keyframes floatCute{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+@media(max-width:650px){header{gap:9px;padding:11px 12px}.brand{font-size:17px}.brand svg{width:41px;height:41px}.brand small{font-size:10px}main{padding:15px 13px 50px}.chip{font-size:11px;padding:5px 8px}.hero{padding:20px;min-height:170px}.hero h1{font-size:25px}.hero-art{font-size:64px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid.two{grid-template-columns:1fr}.val{padding:15px;min-height:128px}.val .v{font-size:28px}.val .t{font-size:12px}.card{border-radius:20px}.menu{min-height:138px;padding:17px}.menu svg{width:65px;height:65px}.menu b{font-size:20px}.menu:after{font-size:18px}.stopwatch .time{font-size:30px}}
+@media(max-width:380px){.hero-art{font-size:46px}.hero{padding:15px}.val .v{font-size:24px}.menu svg{width:54px;height:54px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -80,31 +120,32 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 <main>
 <!-- DASHBOARD -->
 <section class="view active" id="v-dash">
-  <h1>🛠 Dashboard Sensor</h1>
-  <p class="sub">Nilai terbaru dari semua sensor. Terakhir diperbarui: <b id="lastUp">-</b></p>
+  <div class="hero"><div><span class="hero-tag">✿ LAB MINI • AYO BELAJAR!</span><h1>Halo, Ilmuwan Cilik! ✨</h1><p class="sub">Yuk eksplorasi tekanan dan gaya bersama Pressure Lab Kit. Data terakhir: <b id="lastUp">-</b></p></div><div class="hero-art" aria-hidden="true">🧪🎈</div></div>
+  <h2 class="section-head">🌈 Sensor Hari Ini</h2>
   <div class="grid">
     <div class="card val c-blue"><div class="t">⚖ Massa (load cell)</div><span class="v" data-k="load.g" data-d="1">—</span><span class="u">g</span></div>
     <div class="card val c-purple"><div class="t">📟 Pressure transmitter</div><span class="v" data-k="tx.psi" data-d="1">—</span><span class="u">PSI</span></div>
     <div class="card val c-pink"><div class="t">🌬 Tekanan udara</div><span class="v" data-k="bme.p" data-d="1">—</span><span class="u">hPa</span></div>
     <div class="card val c-teal"><div class="t">🌡 Suhu</div><span class="v" data-k="bme.t" data-d="1">—</span><span class="u">°C</span></div>
   </div>
-  <h2 style="margin-top:26px">Pilih trainer</h2>
+  <h2 class="section-head">🎮 Mau Praktikum Apa?</h2>
   <div class="grid two">
     <div class="card menu c-pink" onclick="go('balon')">
       <svg viewBox="0 0 70 70"><ellipse cx="35" cy="26" rx="18" ry="22" fill="#ec4899" stroke="#1e293b" stroke-width="3"/><path d="M31 48h8l-2 7h-4z" fill="#ec4899" stroke="#1e293b" stroke-width="3"/><path d="M35 55c-6 6 6 8 0 13" fill="none" stroke="#1e293b" stroke-width="3"/><path d="M26 16c2-4 5-5 8-5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
-      <div><b>Trainer Balon</b><span>Tekanan udara, suhu, dan pompa.</span></div>
+      <div><b>Trainer Balon</b><span>Tiup balon, lihat tekanan, dan mainkan pompa!</span></div>
     </div>
     <div class="card menu c-blue" onclick="go('hid')">
       <svg viewBox="0 0 70 70"><rect x="8" y="30" width="54" height="22" rx="4" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/><rect x="26" y="8" width="18" height="24" fill="#facc15" stroke="#1e293b" stroke-width="3"/><rect x="20" y="4" width="30" height="8" rx="2" fill="#f97316" stroke="#1e293b" stroke-width="3"/><circle cx="18" cy="60" r="5" fill="#1e293b"/><circle cx="52" cy="60" r="5" fill="#1e293b"/></svg>
-      <div><b>Trainer Hidrolik</b><span>Aktuator, tekanan oli, dan benda padat.</span></div>
+      <div><b>Trainer Hidrolik</b><span>Eksperimen gaya, piston, dan tekanan!</span></div>
     </div>
   </div>
+  <div class="mini-note">💡 Ayo coba! Pilih salah satu trainer untuk mulai bereksperimen.</div>
 </section>
 
 <!-- BALON -->
 <section class="view" id="v-balon">
   <div class="bar"><button class="back" onclick="go('dash')">← Dashboard</button></div>
-  <h1>🎈 Trainer Balon</h1>
+  <h1>🎈 Eksperimen Balon Ceria</h1>
   <p class="sub">Nyalakan pompa lalu amati perubahan tekanan udara.</p>
   <div class="grid">
     <div class="card val c-pink"><div class="t">🌬 Tekanan udara</div><span class="v" data-k="bme.p" data-d="1">—</span><span class="u">hPa</span></div>
@@ -129,7 +170,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2p
 <!-- HIDROLIK -->
 <section class="view" id="v-hid">
   <div class="bar"><button class="back" onclick="go('dash')">← Dashboard</button></div>
-  <h1>🔧 Trainer Hidrolik</h1>
+  <h1>🛠️ Laboratorium Hidrolik</h1>
   <div class="grid">
     <div class="card val c-blue"><div class="t">⚖ Massa</div><span class="v" data-k="load.g" data-d="1">—</span><span class="u">g</span></div>
     <div class="card val c-orange"><div class="t">💪 Gaya</div><span class="v" data-k="load.n" data-d="3">—</span><span class="u">N</span></div>
