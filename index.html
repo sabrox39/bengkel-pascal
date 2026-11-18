@@ -162,7 +162,7 @@ label{font-weight:900;color:#67617e}.rows>div{border-bottom:1px dashed #e8e3f0;p
       <div class="hint" id="pumpTimerState" style="margin:0">Stopwatch mulai saat pompa menyala.</div>
     </div>
     <div class="sw-actions">
-      <button class="b-orange" id="btnResetStopwatch" type="button">↺ Reset</button>
+      <button class="b-orange ctl" id="btnResetStopwatch" type="button">↺ Reset</button>
     </div>
   </div>
 </section>
@@ -178,14 +178,15 @@ label{font-weight:900;color:#67617e}.rows>div{border-bottom:1px dashed #e8e3f0;p
     <div class="card val c-green"><div class="t">📟 Transmitter</div><span class="v" data-k="tx.kpa" data-d="1">—</span><span class="u">kPa</span></div>
   </div>
   <div class="card c-yellow" style="margin-top:16px">
-    <h2>⬆⬇ Kontrol aktuator <span class="pill" id="servoState">berhenti</span></h2>
-    <div class="actbtns" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
-      <button class="b-green ctl" id="btnUp">▲ Naik</button>
-      <button class="b-red ctl" id="btnStop">■ Berhenti</button>
-      <button class="b-blue ctl" id="btnDown">▼ Turun</button>
+    <h2>🎯 Posisi Suntikan <span class="pill" id="servoState">belum diketahui</span></h2>
+    <p class="hint">Pilih tujuan. ESP32 mengatur gerakan dari posisi sebelumnya menggunakan durasi kalibrasi yang tersimpan.</p>
+    <div class="actbtns" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <button class="b-green ctl pos-btn" id="btnPosAtas">⬆ Atas</button>
+      <button class="b-purple ctl pos-btn" id="btnPosTengah">● Tengah</button>
+      <button class="b-blue ctl pos-btn" id="btnPosBawah">⬇ Bawah</button>
     </div>
-    <label>Durasi gerak per perintah: <span id="durLbl">400</span> ms</label>
-    <input type="range" id="dur" min="100" max="2000" step="50" value="400" style="width:100%">
+    <button class="b-red ctl" id="btnServoEmergency" style="width:100%;margin-top:12px">■ STOP DARURAT SERVO</button>
+    <div class="hint" id="servoPositionHint">Posisi awal belum diketahui. Buka Pengaturan → Kalibrasi Posisi Suntikan.</div>
   </div>
 
   <div class="grid two" style="margin-top:16px">
@@ -241,6 +242,30 @@ label{font-weight:900;color:#67617e}.rows>div{border-bottom:1px dashed #e8e3f0;p
       <div class="inl"><input type="number" id="calGram" min="1" step="0.1" placeholder="mis. 500"><button class="b-purple ctl" id="btnCal">Kalibrasi</button></div>
       <div class="hint">Kosongkan load cell → Tare → letakkan massa acuan → isi nilainya → Kalibrasi.</div>
     </div>
+    <div class="card c-purple">
+      <h2>🎯 Kalibrasi Posisi Suntikan</h2>
+      <p class="hint">Servo 360° tidak memiliki sensor posisi. Masukkan waktu gerak setiap ruas. Nilai disimpan di ESP32 dan bertahan setelah restart.</p>
+      <label>Bawah → Tengah (ms)</label><input type="number" id="calBT" min="50" max="15000" step="10" value="700">
+      <label>Tengah → Atas (ms)</label><input type="number" id="calTA" min="50" max="15000" step="10" value="700">
+      <label>Atas → Tengah (ms)</label><input type="number" id="calAT" min="50" max="15000" step="10" value="700">
+      <label>Tengah → Bawah (ms)</label><input type="number" id="calTB" min="50" max="15000" step="10" value="700">
+      <button class="b-purple ctl" id="btnSavePosCal" style="width:100%;margin-top:12px">Simpan Kalibrasi ke ESP32</button>
+      <div class="hint">Untuk menentukan durasi, gunakan gerakan manual pendek di bawah; awasi piston agar tidak menabrak batas.</div>
+      <label>Durasi gerak manual (ms)</label><input type="number" id="jogMs" min="50" max="3000" step="50" value="200">
+      <div class="inl" style="margin-top:10px;flex-wrap:wrap">
+        <button class="b-green ctl" id="btnJogUp">▲ Jog Naik</button>
+        <button class="b-blue ctl" id="btnJogDown">▼ Jog Turun</button>
+        <button class="b-red ctl" id="btnJogStop">■ Stop</button>
+      </div>
+      <label>Set referensi posisi fisik (tanpa menggerakkan servo)</label>
+      <div class="inl" style="flex-wrap:wrap">
+        <button class="ctl" id="refBawah">Set sebagai Bawah</button>
+        <button class="ctl" id="refTengah">Set sebagai Tengah</button>
+        <button class="ctl" id="refAtas">Set sebagai Atas</button>
+      </div>
+      <p class="hint">Atur suntikan secara fisik hingga tepat pada salah satu posisi, hentikan servo, lalu tekan tombol referensi sesuai posisi nyata. Ulangi referensi setelah reboot, jog, atau STOP darurat.</p>
+      <div class="rows"><div><span>Posisi terkonfirmasi</span><b id="calPosNow">Belum diketahui</b></div><div><span>Target</span><b id="calPosTarget">—</b></div></div>
+    </div>
     <div class="card c-orange">
       <h2>WiFi <button class="ctl" id="btnScan" style="padding:4px 10px;font-size:12px">Pindai</button></h2>
       <div class="rows"><div><span>Tersambung ke</span><b id="wSsid">—</b></div><div><span>IP</span><b data-k="wifi.ip">—</b></div><div><span>Sinyal</span><b><span data-k="wifi.rssi" data-d="0">—</span> dBm</b></div></div>
@@ -263,11 +288,13 @@ const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,
 let cfg={...DEF};try{cfg={...DEF,...JSON.parse(localStorage.getItem(KEY)||'{}')};if(!cfg.pass)cfg.pass=DEF.pass}catch(e){}
 let client=null,mqttUp=false,devOnline=false,lastTel=0,tel=null,cur='conn';
 
-// Stopwatch menghitung hanya selama pompa terdeteksi menyala.
-let pumpRunning=false,pumpStartedAt=null,pumpElapsedMs=0;
-let pumpWatchInterval=null;
+// Stopwatch berbasis durasi dari ESP32, bukan waktu klik di browser.
+// Di antara telemetry, performance.now() menghaluskan tampilan pada interval 100 ms.
+let pumpRunning=false,pumpElapsedMs=0,pumpSyncAt=null,pumpHasSync=false;
+let pumpPending=false,pumpResetPending=false,pumpWatchInterval=null;
 function stopwatchElapsed(){
-  return pumpElapsedMs+(pumpRunning&&pumpStartedAt!==null?Date.now()-pumpStartedAt:0);
+  const fresh=pumpSyncAt!==null && performance.now()-pumpSyncAt<=6000;
+  return pumpElapsedMs+(pumpRunning&&fresh?performance.now()-pumpSyncAt:0);
 }
 function renderStopwatch(){
   const total=Math.max(0,stopwatchElapsed());
@@ -276,23 +303,30 @@ function renderStopwatch(){
   const seconds=Math.floor((tenths%600)/10);
   const tenth=tenths%10;
   $('#pumpStopwatch').textContent=String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0')+'.'+tenth;
-  $('#pumpTimerState').textContent=pumpRunning?'Pompa menyala · stopwatch berjalan':'Pompa mati · stopwatch berhenti';
+  const fresh=mqttUp&&devOnline&&pumpHasSync&&pumpSyncAt!==null&&performance.now()-pumpSyncAt<=6000;
+  $('#pumpTimerState').textContent=!pumpHasSync?'Menunggu waktu dari ESP32…':
+    !fresh?'Koneksi/data tertunda · menunggu sinkronisasi':
+    pumpResetPending?'Menunggu konfirmasi reset dari alat…':
+    pumpPending?'Menunggu konfirmasi pompa dari alat…':
+    pumpRunning?'Pompa menyala · waktu ESP32':'Pompa mati · stopwatch berhenti';
 }
-function updatePumpStopwatch(isOn){
-  if(isOn&&!pumpRunning){
-    pumpRunning=true;
-    pumpStartedAt=Date.now();
-  }else if(!isOn&&pumpRunning){
-    pumpElapsedMs+=Date.now()-pumpStartedAt;
-    pumpRunning=false;
-    pumpStartedAt=null;
+function updatePumpStopwatch(t){
+  // Hanya terima nilai otoritatif ESP32; web tidak pernah mereset waktu lokal sendiri.
+  if(typeof t.pump_elapsed_ms==='number' && Number.isFinite(t.pump_elapsed_ms) && t.pump_elapsed_ms>=0){
+    pumpElapsedMs=t.pump_elapsed_ms;
+    pumpRunning=!!t.pump;
+    pumpSyncAt=performance.now();
+    pumpHasSync=true;
   }
   renderStopwatch();
 }
 function resetPumpStopwatch(){
-  pumpElapsedMs=0;
-  pumpStartedAt=pumpRunning?Date.now():null;
-  renderStopwatch();
+  if(pumpResetPending)return;
+  if(send('pump_reset','1')){
+    pumpResetPending=true;
+    renderStopwatch();
+    setTimeout(()=>{if(pumpResetPending){pumpResetPending=false;renderStopwatch();toast('Belum ada konfirmasi reset. Periksa koneksi alat.',true)}},6000);
+  }
 }
 
 const get=(o,p)=>p.split('.').reduce((a,k)=>a==null?null:a[k],o);
@@ -334,7 +368,11 @@ function onMsg(topic,buf){
   let j;try{j=JSON.parse(text)}catch(e){return}
   if(sub==='telemetry'){tel=j;lastTel=Date.now();renderTel(j)}
   else if(sub==='info'){$('#iFw').textContent=j.fw+' · '+j.mac;$('#pumpMax').textContent=j.pump_max_s||'—'}
-  else if(sub==='event'){toast(j.msg,!j.ok);log(`[${j.type}] ${j.msg}`,j.ok?'g':'e')}
+  else if(sub==='event'){
+    if(j.type==='pump_reset')pumpResetPending=false;
+    if(j.type==='servo_cal' && j.ok)calFormDirty=false;
+    toast(j.msg,!j.ok);log(`[${j.type}] ${j.msg}`,j.ok?'g':'e');
+  }
   else if(sub==='wifi/scan')renderNets(j.networks||[]);
 }
 function renderTel(t){
@@ -345,8 +383,22 @@ function renderTel(t){
   $('#wSsid').textContent=t.wifi.ssid||'—';
   $('#iUp').textContent=fmtUp(t.up);
   $('#swPump').classList.toggle('on',!!t.pump);
-  updatePumpStopwatch(!!t.pump);
-  const ss=$('#servoState');ss.textContent=t.servo.run?(t.servo.dir>0?'naik…':'turun…'):'berhenti';ss.className='pill'+(t.servo.run?' ok':'');
+  updatePumpStopwatch(t);
+  pumpPending=false;
+  // Reset dinyatakan selesai setelah telemetry menunjukkan nilai baru (event bisa datang lebih dulu).
+  if(pumpResetPending&&t.pump_elapsed_ms<1500)pumpResetPending=false;
+  const sv=t.servo||{};
+  const posLabel=p=>({atas:'Atas',tengah:'Tengah',bawah:'Bawah'})[p]||'Belum diketahui';
+  const ss=$('#servoState');ss.textContent=sv.moving?'Bergerak ke '+posLabel(sv.target):posLabel(sv.position);
+  ss.className='pill'+(sv.moving?' ok':'');
+  $('#servoPositionHint').textContent=sv.moving?'Sedang menuju '+posLabel(sv.target)+'…':
+      sv.position==='unknown'?'Posisi belum diketahui. Referensikan di Pengaturan sebelum memilih tujuan.':
+      'Posisi saat ini: '+posLabel(sv.position)+'. Pilih posisi tujuan.';
+  $('#calPosNow').textContent=posLabel(sv.position);$('#calPosTarget').textContent=sv.moving?posLabel(sv.target):'—';
+  document.querySelectorAll('.pos-btn').forEach(b=>b.disabled=!(mqttUp&&devOnline)||!!sv.moving||sv.position==='unknown');
+  if(Array.isArray(sv.cal_ms)&&sv.cal_ms.length===4&&!calFormDirty){
+    ['#calBT','#calTA','#calAT','#calTB'].forEach((id,i)=>$(id).value=sv.cal_ms[i]);
+  }
   [['#sBme',t.sensors.bme],['#sAds',t.sensors.ads],['#sHx',t.sensors.hx]].forEach(([id,ok])=>{const e=$(id);e.className='pill '+(ok?'ok':'bad');e.textContent=e.textContent.split(' ')[0]+(ok?' ✓':' ✗')});
   const m=fmt(t.load.g,1)+' g';$('#oM').value=m;$('#sM').value=m;
   $('#lastUp').textContent=new Date().toLocaleTimeString('id-ID');
@@ -359,7 +411,11 @@ function renderNets(list){
     b.onclick=()=>{$('#newSsid').value=n.ssid;$('#newPass').focus()};box.appendChild(b)});
   $('#btnScan').disabled=false;$('#btnScan').textContent='Pindai';
 }
-function refreshUI(){const on=mqttUp&&devOnline;document.querySelectorAll('.ctl').forEach(b=>b.disabled=!on)}
+function refreshUI(){const on=mqttUp&&devOnline;document.querySelectorAll('.ctl').forEach(b=>b.disabled=!on);
+  if(!on){pumpPending=false;pumpResetPending=false;}
+  document.querySelectorAll('.pos-btn').forEach(b=>b.disabled=!on||!tel||!tel.servo||tel.servo.position==='unknown'||!!tel.servo.moving);
+  renderStopwatch();
+}
 setInterval(()=>{if(devOnline&&Date.now()-lastTel>6000)chip('#chipDev','warn','Alat: data tertunda')},2000);
 
 /* ---- perhitungan ---- */
@@ -392,15 +448,50 @@ $('#btnSol').onclick=()=>{
 };
 
 /* ---- kontrol ---- */
-$('#swPump').onclick=()=>send('pump',tel&&tel.pump?'off':'on');
+$('#swPump').onclick=()=>{
+  if(pumpPending)return;
+  if(send('pump',tel&&tel.pump?'off':'on')){
+    pumpPending=true;renderStopwatch();
+    setTimeout(()=>{if(pumpPending){pumpPending=false;renderStopwatch()}},5000);
+  }
+};
 $('#btnResetStopwatch').onclick=resetPumpStopwatch;
 pumpWatchInterval=setInterval(renderStopwatch,100);
 renderStopwatch();
-const dur=()=>+$('#dur').value;
-$('#dur').oninput=()=>$('#durLbl').textContent=dur();
-$('#btnUp').onclick=()=>send('actuator',{dir:'up',ms:dur()});
-$('#btnDown').onclick=()=>send('actuator',{dir:'down',ms:dur()});
-$('#btnStop').onclick=()=>send('actuator',{dir:'stop'});
+let calFormDirty=false;
+['#calBT','#calTA','#calAT','#calTB'].forEach(id=>$(id).oninput=()=>{calFormDirty=true});
+function sendPosition(position){
+  if(!tel||!tel.servo||tel.servo.position==='unknown')return toast('Set referensi posisi fisik di Pengaturan terlebih dahulu.',true);
+  send('servo_position',{position});
+}
+$('#btnPosAtas').onclick=()=>sendPosition('atas');
+$('#btnPosTengah').onclick=()=>sendPosition('tengah');
+$('#btnPosBawah').onclick=()=>sendPosition('bawah');
+function emergencyServoStop(){send('servo_stop','1')}
+$('#btnServoEmergency').onclick=emergencyServoStop;
+$('#btnJogStop').onclick=emergencyServoStop;
+$('#btnSavePosCal').onclick=()=>{
+  const ids=['#calBT','#calTA','#calAT','#calTB'];const val=ids.map(id=>Number($(id).value));
+  if(val.some(v=>!Number.isInteger(v)||v<50||v>15000))return toast('Keempat durasi harus bilangan bulat 50–15000 ms.',true);
+  if(send('servo_cal',{bawah_tengah:val[0],tengah_atas:val[1],atas_tengah:val[2],tengah_bawah:val[3]})){
+    calFormDirty=false;toast('Kalibrasi dikirim. Tunggu konfirmasi ESP32.');
+  }
+};
+function jog(dir){
+  const ms=Number($('#jogMs').value);
+  if(!Number.isInteger(ms)||ms<50||ms>3000)return toast('Durasi jog harus 50–3000 ms.',true);
+  if(!confirm('Pastikan piston tidak berada di ujung mekanik. Jalankan jog '+dir+' selama '+ms+' ms?'))return;
+  send('servo_jog',{dir,ms});
+}
+$('#btnJogUp').onclick=()=>jog('up');
+$('#btnJogDown').onclick=()=>jog('down');
+function setRef(position){
+  if(confirm('Apakah posisi FISIK suntikan sekarang benar-benar '+position.toUpperCase()+' dan servo sedang diam?'))
+    send('servo_reference',{position});
+}
+$('#refBawah').onclick=()=>setRef('bawah');
+$('#refTengah').onclick=()=>setRef('tengah');
+$('#refAtas').onclick=()=>setRef('atas');
 $('#btnTare').onclick=()=>{if(confirm('Pastikan load cell TANPA beban. Lanjutkan tare?'))send('tare','1')};
 $('#btnRestart').onclick=()=>{if(confirm('Restart perangkat?'))send('restart','1')};
 $('#btnCal').onclick=()=>{const g=parseFloat($('#calGram').value);if(!(g>0))return toast('Isi massa acuan lebih dari 0.',true);
