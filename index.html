@@ -1,517 +1,1029 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pressure Lab Kit – Dashboard Praktikum</title>
-<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
-<style>
-:root{--text:#1e293b;--muted:#64748b;--line:#e2e8f0;
---blue:#2563eb;--orange:#f97316;--green:#16a34a;--pink:#ec4899;--purple:#7c3aed;--yellow:#facc15;--teal:#0d9488;--red:#dc2626}
-*{box-sizing:border-box}
-body{margin:0;background:#fff;color:var(--text);font:15px/1.5 "Trebuchet MS","Segoe UI",system-ui,sans-serif}
-.hazard{height:12px;background:repeating-linear-gradient(-45deg,var(--yellow) 0 14px,#1e293b 14px 28px)}
-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 20px;border-bottom:3px solid var(--text);position:sticky;top:0;background:#fff;z-index:10}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;cursor:pointer}
-.brand small{display:block;font-weight:600;font-size:12px;color:var(--muted)}
-.spacer{flex:1}
-.chip{padding:4px 12px;border-radius:99px;border:2px solid var(--line);font-size:12.5px;font-weight:700;color:var(--muted)}
-.chip.ok{border-color:var(--green);color:var(--green);background:#f0fdf4}.chip.bad{border-color:var(--red);color:var(--red);background:#fef2f2}.chip.warn{border-color:var(--orange);color:var(--orange);background:#fff7ed}
-main{max-width:1150px;margin:0 auto;padding:20px 16px 60px}
-.view{display:none}.view.active{display:block}
-h1{margin:6px 0 4px;font-size:26px}h2{margin:0 0 12px;font-size:18px}
-.sub{color:var(--muted);margin:0 0 18px}
-.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
-.grid.two{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.card{border:2px solid var(--text);border-radius:16px;padding:16px;background:#fff;box-shadow:4px 4px 0 var(--c,var(--text))}
-.val{--c:var(--blue)}.val .t{font-size:13px;font-weight:700;color:var(--c)}.val .v{font-size:30px;font-weight:800;line-height:1.2}.val .u{font-size:14px;color:var(--muted);margin-left:4px;font-weight:600}
-.c-blue{--c:var(--blue)}.c-orange{--c:var(--orange)}.c-green{--c:var(--green)}.c-pink{--c:var(--pink)}.c-purple{--c:var(--purple)}.c-teal{--c:var(--teal)}.c-yellow{--c:#eab308}
-.menu{display:flex;gap:16px;align-items:center;cursor:pointer;padding:22px;border-width:3px;transition:transform .12s}
-.menu:hover{transform:translate(-2px,-2px)}
-.menu svg{width:70px;height:70px;flex:none}
-.menu b{font-size:21px;display:block}.menu span{color:var(--muted)}
-.bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-button{font:inherit;font-weight:800;cursor:pointer;border:2px solid var(--text);background:#fff;color:var(--text);border-radius:12px;padding:10px 16px;box-shadow:3px 3px 0 var(--text);transition:.1s}
-button:hover:not(:disabled){transform:translate(1px,1px);box-shadow:2px 2px 0 var(--text)}
-button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
-.b-blue{background:var(--blue);color:#fff}.b-green{background:var(--green);color:#fff}.b-orange{background:var(--orange);color:#fff}.b-red{background:var(--red);color:#fff}.b-purple{background:var(--purple);color:#fff}.b-yellow{background:var(--yellow)}
-.back{padding:6px 14px}
-label{display:block;font-size:13px;font-weight:700;margin:10px 0 4px}
-input[type=text],input[type=password],input[type=number]{width:100%;padding:9px 11px;border:2px solid var(--text);border-radius:10px;font:inherit}
-input:focus{outline:3px solid #bfdbfe}
-.inl{display:flex;gap:8px;align-items:center}.inl input{min-width:0}
-.rows>div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:2px dotted var(--line)}
-.rows>div:last-child{border:0}.rows span{color:var(--muted)}.rows b{font-variant-numeric:tabular-nums}
-.res{margin-top:14px;padding:12px;border-radius:12px;background:#f8fafc;border:2px dashed var(--c,var(--muted));display:none}
-.res.show{display:block}.res .big{font-size:22px;font-weight:800;color:var(--c)}
-.actbtns{display:grid;gap:10px;margin-top:6px}.actbtns button{padding:15px;font-size:17px}
-.sw{position:relative;width:70px;height:36px;border-radius:99px;border:2px solid var(--text);background:#e2e8f0;padding:0;flex:none}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid var(--text);transition:.2s}
-.sw.on{background:var(--green)}.sw.on::after{left:37px}
-.pill{font-size:12px;padding:2px 10px;border-radius:99px;border:2px solid var(--line);color:var(--muted);font-weight:700}
-.pill.ok{color:var(--green);border-color:var(--green)}.pill.bad{color:var(--red);border-color:var(--red)}
-.nets{max-height:150px;overflow:auto;border:2px solid var(--line);border-radius:10px;margin:8px 0}
-.nets button{display:flex;justify-content:space-between;width:100%;border:0;border-radius:0;box-shadow:none;border-bottom:1px solid var(--line);font-weight:600}
-.log{max-height:160px;overflow:auto;font:12.5px ui-monospace,Menlo,monospace}.log .e{color:var(--red)}.log .g{color:var(--green)}
-table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:2px dotted var(--line);text-align:right}th:first-child,td:first-child{text-align:left}th{font-size:12.5px;color:var(--muted)}
-.toast{position:fixed;right:14px;bottom:14px;display:grid;gap:8px;z-index:50}.toast div{background:var(--text);color:#fff;padding:10px 14px;border-radius:10px;max-width:320px}.toast .e{background:var(--red)}
-.conn{max-width:430px;margin:20px auto}
-.hint{font-size:12.5px;color:var(--muted);margin-top:8px}
-.stopwatch{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.stopwatch .time{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:1px}
-.stopwatch .sw-actions{display:flex;gap:8px;align-items:center}
-.check{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px}.check input{width:auto}
-.err{color:var(--red);font-weight:700;margin-top:10px;min-height:20px}
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
 
-/* ===== Pressure Lab Kit: Candy Classroom Edition ===== */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
-:root{--text:#34314f;--muted:#85839b;--line:#e9e5f2;--blue:#6c91ee;--orange:#f5a76c;--green:#58bda3;--pink:#f087ad;--purple:#a48bea;--yellow:#ffdb85;--teal:#50b9b8;--red:#ef7986}
-body{font:15px/1.6 'Nunito','Trebuchet MS',sans-serif;background:radial-gradient(circle at 9% 17%,#ffe6f0 0,transparent 24%),radial-gradient(circle at 92% 26%,#e8e4ff 0,transparent 28%),linear-gradient(135deg,#fffbfd,#f8f9ff 55%,#f2fffc);min-height:100vh}
-.hazard{height:8px;background:repeating-linear-gradient(90deg,#f7a8c7 0 55px,#ffdbaa 55px 110px,#aedfd9 110px 165px,#c8bbf6 165px 220px)}
-header{background:rgba(255,255,255,.91);backdrop-filter:blur(18px);border-bottom:1px solid #f2ebf5;box-shadow:0 6px 26px #9b91ba12;padding:15px clamp(16px,4vw,44px)}
-.brand{font-size:21px;letter-spacing:-.5px}.brand svg{background:#fff3c5;border-radius:16px;padding:6px;width:49px;height:49px;box-shadow:0 5px 12px #f1d48e44}.brand small{font-size:12px;color:#928aa0;letter-spacing:0}
-main{max-width:1200px;padding:26px 22px 80px}
-h1{font-size:clamp(26px,3vw,34px);font-weight:900;letter-spacing:-.8px}h2{font-size:19px;font-weight:900;letter-spacing:-.3px}.sub{font-size:14px}
-.chip{border:1px solid #ede9f5;background:#faf9fe;padding:7px 12px;box-shadow:0 3px 10px #9288ad10}.chip.ok{background:#e8faf1;border-color:#b7ead7;color:#239878}.chip.bad{background:#fff0f1;border-color:#ffd5da;color:#dc6978}.chip.warn{background:#fff7e9;border-color:#ffe2b5;color:#bd8b41}
-.card{border:1px solid #eee9f5;border-radius:24px;background:#fff;box-shadow:0 8px 22px #8d86a01a,0 2px 0 #ffffff;--c:var(--purple);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;padding:21px}
-.card:hover{box-shadow:0 14px 30px #8d86a024}
-.grid{gap:19px}.grid.two{gap:20px}
-.val{min-height:148px;display:flex;flex-wrap:wrap;align-content:center;align-items:baseline;gap:2px;background:linear-gradient(145deg,#fff 20%,color-mix(in srgb,var(--c) 13%,white))}
-.val::after{content:'✦';position:absolute;top:7px;right:18px;font-size:27px;opacity:.32;color:var(--c)}
-.val .t{width:100%;font-size:14px;font-weight:900;color:var(--c);margin-bottom:12px}.val .v{font-size:clamp(30px,3vw,38px);font-weight:900;letter-spacing:-1.4px}.val .u{font-weight:800;color:#928da5}
-.c-blue{--c:var(--blue)}.c-orange{--c:var(--orange)}.c-green{--c:var(--green)}.c-pink{--c:var(--pink)}.c-purple{--c:var(--purple)}.c-teal{--c:var(--teal)}.c-yellow{--c:#deb25c}
-.menu{min-height:164px;border:1px solid #f0e8f4;padding:23px;gap:22px;background:linear-gradient(125deg,#fff,#fff7fb);box-shadow:0 10px 25px #ad9bb326}
-.menu.c-blue{background:linear-gradient(125deg,#fff,#f1f5ff)}
-.menu:hover{transform:translateY(-5px);box-shadow:0 18px 32px #ad9bb338}
-.menu svg{width:90px;height:90px;filter:drop-shadow(0 6px 8px #9e91a036);transition:transform .25s}.menu:hover svg{transform:rotate(-7deg) scale(1.1)}
-.menu b{font-size:23px;font-weight:900}.menu span{font-size:14px}.menu:after{content:'➜';margin-left:auto;color:var(--c);font-size:25px;font-weight:900}
-button{border:1px solid #e6e0f0;border-radius:15px;box-shadow:0 4px 0 #ddd5e9;color:var(--text);padding:11px 17px;transition:transform .15s,box-shadow .15s,filter .15s}
-button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 0 #ddd5e9;filter:brightness(1.03)}button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #ddd5e9}
-.b-blue{background:#7d9bf1;color:white;border-color:#7191ec;box-shadow:0 4px 0 #5576ce}.b-green{background:#69c7ac;color:#fff;border-color:#58bda3;box-shadow:0 4px 0 #39a18a}.b-orange{background:#f9b477;color:#fff;border-color:#ec9e62;box-shadow:0 4px 0 #d9894b}.b-red{background:#f08b98;color:#fff;border-color:#e87e8b;box-shadow:0 4px 0 #cf6875}.b-purple{background:#a48bea;color:#fff;border-color:#977cdd;box-shadow:0 4px 0 #7960be}.b-yellow{background:#ffdb85}
-.back{background:#fff;border:1px solid #eee6f4;box-shadow:0 4px 0 #e6deee}
-input[type=text],input[type=password],input[type=number]{border:1.5px solid #e5e0f1;border-radius:13px;background:#fcfbff;padding:11px 12px;color:var(--text)}input:focus{outline:3px solid #dfd6ff;border-color:#b3a4e9}
-label{font-weight:900;color:#67617e}.rows>div{border-bottom:1px dashed #e8e3f0;padding:9px 0}.res{background:#fbfaff;border:1px dashed var(--c);border-radius:17px;padding:15px}.res .big{font-size:22px}
-.sw{width:76px;height:42px;background:#e8e6f2;border:2px solid #d9d4e6;box-shadow:none}.sw:after{width:30px;height:30px;top:4px;left:4px;border:0;box-shadow:0 3px 8px #756b9b33}.sw.on{background:#6dcfb2;border-color:#69c8ad}.sw.on:after{left:39px}.pill{border:1px solid #e9e5f2;background:#f8f6fc;padding:5px 11px}.pill.ok{background:#ebfff7;border-color:#a9e5d0;color:#239878}.pill.bad{background:#fff0f2;border-color:#f7c7cf;color:#d96a79}
-.stopwatch .time{background:#f0f5ff;color:#6b86d8;border:1px solid #dfe8ff;padding:9px 16px;border-radius:15px;display:inline-block;margin-top:7px;font-size:36px}
-.nets{border-color:#ede9f5;border-radius:16px}.nets button{box-shadow:none}input[type=range]{accent-color:#a48bea}.toast div{background:#48415f;border-radius:15px;box-shadow:0 8px 28px #4d3e6029}
-.hero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:27px 31px;margin-bottom:25px;background:linear-gradient(105deg,#ffecf3 0%,#f7efff 55%,#ecf8ff 100%);border:1px solid #f5e7fa;border-radius:27px}
-.hero:before,.hero:after{content:'✦';position:absolute;color:#e5a2bc;font-size:46px;opacity:.5}.hero:before{left:49%;top:-23px}.hero:after{right:10%;bottom:-29px;color:#a6abd9}.hero h1{margin:0 0 7px}.hero .sub{margin:0;max-width:520px;color:#79738a}.hero-tag{display:inline-flex;border-radius:100px;background:#fff;padding:5px 13px;color:#d477a6;font-size:12px;font-weight:900;margin-bottom:13px;box-shadow:0 3px 8px #d0b1c52b}.hero-art{font-size:clamp(70px,10vw,112px);line-height:1;filter:drop-shadow(0 10px 6px #ba9dab35);animation:floatCute 3.5s ease-in-out infinite;white-space:nowrap;user-select:none}
-.section-head{margin:30px 0 15px;display:flex;align-items:center;gap:8px}.section-head:after{content:'';height:2px;flex:1;background:linear-gradient(90deg,#eeddeb,transparent)}
-.mini-note{display:inline-block;background:#fff6dc;border-radius:15px;padding:8px 12px;font-size:12px;color:#968053;font-weight:800;margin-top:16px}
-@keyframes floatCute{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(3deg)}}
-@media(max-width:650px){header{gap:9px;padding:11px 12px}.brand{font-size:17px}.brand svg{width:41px;height:41px}.brand small{font-size:10px}main{padding:15px 13px 50px}.chip{font-size:11px;padding:5px 8px}.hero{padding:20px;min-height:170px}.hero h1{font-size:25px}.hero-art{font-size:64px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid.two{grid-template-columns:1fr}.val{padding:15px;min-height:128px}.val .v{font-size:28px}.val .t{font-size:12px}.card{border-radius:20px}.menu{min-height:138px;padding:17px}.menu svg{width:65px;height:65px}.menu b{font-size:20px}.menu:after{font-size:18px}.stopwatch .time{font-size:30px}}
-@media(max-width:380px){.hero-art{font-size:46px}.hero{padding:15px}.val .v{font-size:24px}.menu svg{width:54px;height:54px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+<title>Pressure Lab Kit</title>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+
+<style>
+:root {
+  --bg:#f7f8ff;
+  --card:#ffffff;
+  --text:#34314f;
+  --muted:#85839b;
+  --blue:#7797f1;
+  --green:#58bda3;
+  --red:#ef7986;
+  --purple:#a48bea;
+  --orange:#f5a76c;
+  --border:#e9e5f2;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+  line-height:1.5;
+}
+
+header {
+  padding:18px 24px;
+  background:white;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  border-bottom:1px solid var(--border);
+}
+
+header h2 { margin:0; }
+
+header p {
+  margin:3px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+main {
+  max-width:1100px;
+  margin:auto;
+  padding:25px 16px;
+}
+
+.view { display:none; }
+
+.view.active { display:block; }
+
+.hero {
+  padding:28px;
+  background:linear-gradient(
+    120deg,#ffeaf3,#eeeaff,#eaf8ff
+  );
+  border-radius:24px;
+  margin-bottom:20px;
+}
+
+.card {
+  background:var(--card);
+  padding:22px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  box-shadow:0 5px 18px #9d92bd19;
+  margin-bottom:16px;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;
+}
+
+.value {
+  font-size:29px;
+  font-weight:bold;
+  color:var(--blue);
+}
+
+button {
+  cursor:pointer;
+  border:0;
+  border-radius:12px;
+  padding:13px 18px;
+  font-size:15px;
+  font-weight:bold;
+  margin:4px;
+  color:white;
+  background:var(--blue);
+}
+
+button:disabled {
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.btn-green { background:var(--green); }
+.btn-red { background:var(--red); }
+.btn-blue { background:var(--blue); }
+.btn-purple { background:var(--purple); }
+.btn-orange { background:var(--orange); }
+
+.btn-light {
+  background:#f1eff8;
+  color:var(--text);
+}
+
+.controls {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:20px;
+}
+
+.controls button {
+  min-height:85px;
+  font-size:20px;
+  margin:0;
+}
+
+label {
+  display:block;
+  font-weight:bold;
+  margin:12px 0 5px;
+}
+
+input {
+  width:100%;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  font-size:15px;
+}
+
+small, .hint {
+  color:var(--muted);
+}
+
+.status {
+  padding:7px 12px;
+  border-radius:20px;
+  background:#ffe8e8;
+  color:#bd4354;
+  font-weight:bold;
+  font-size:12px;
+}
+
+.status.online {
+  background:#e3faef;
+  color:#27886b;
+}
+
+.stopwatch {
+  font-size:39px;
+  font-weight:bold;
+  color:var(--blue);
+  font-variant-numeric:tabular-nums;
+}
+
+.result {
+  background:#f7f8ff;
+  padding:16px;
+  border-radius:12px;
+  margin-top:12px;
+}
+
+.row {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 0;
+  border-bottom:1px dashed var(--border);
+}
+
+@media(max-width:550px) {
+  .controls { gap:6px; }
+
+  .controls button {
+    min-height:70px;
+    font-size:15px;
+    padding:10px 5px;
+  }
+
+  header { padding:12px; }
+
+  .value { font-size:24px; }
+}
 </style>
 </head>
+
 <body>
-<div class="hazard"></div>
+
 <header>
-  <div class="brand" onclick="go('dash')">
-    <svg width="38" height="38" viewBox="0 0 40 40" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round"><circle cx="20" cy="20" r="7" fill="#facc15"/><path d="M20 3l3 5 5-2 1 6 6 1-2 5 5 3-5 3 2 5-6 1-1 6-5-2-3 5-3-5-5 2-1-6-6-1 2-5-5-3 5-3-2-5 6-1 1-6 5 2z" stroke-width="2" fill="none"/></svg>
-    <div>Pressure Lab Kit<small>Praktikum tekanan · kelas SMP</small></div>
+  <div>
+    <h2>🧪 Pressure Lab Kit</h2>
+    <p>Dashboard Praktikum Tekanan</p>
   </div>
-  <div class="spacer"></div>
-  <span class="chip" id="chipMqtt">MQTT: terputus</span>
-  <span class="chip" id="chipDev">Alat: -</span>
-  <button class="back" id="btnSet" onclick="go('set')">⚙ Pengaturan</button>
+
+  <span class="status" id="connectionStatus">
+    Offline
+  </span>
 </header>
 
 <main>
-<!-- DASHBOARD -->
-<section class="view active" id="v-dash">
-  <div class="hero"><div><span class="hero-tag">✿ LAB MINI • AYO BELAJAR!</span><h1>Halo, Ilmuwan Cilik! ✨</h1><p class="sub">Yuk eksplorasi tekanan dan gaya bersama Pressure Lab Kit. Data terakhir: <b id="lastUp">-</b></p></div><div class="hero-art" aria-hidden="true">🧪🎈</div></div>
-  <h2 class="section-head">🌈 Sensor Hari Ini</h2>
-  <div class="grid">
-    <div class="card val c-blue"><div class="t">⚖ Massa (load cell)</div><span class="v" data-k="load.g" data-d="1">—</span><span class="u">g</span></div>
-    <div class="card val c-purple"><div class="t">📟 Pressure transmitter</div><span class="v" data-k="tx.psi" data-d="1">—</span><span class="u">PSI</span></div>
-    <div class="card val c-pink"><div class="t">🌬 Tekanan udara</div><span class="v" data-k="bme.p" data-d="1">—</span><span class="u">hPa</span></div>
-    <div class="card val c-teal"><div class="t">🌡 Suhu</div><span class="v" data-k="bme.t" data-d="1">—</span><span class="u">°C</span></div>
-  </div>
-  <h2 class="section-head">🎮 Mau Praktikum Apa?</h2>
-  <div class="grid two">
-    <div class="card menu c-pink" onclick="go('balon')">
-      <svg viewBox="0 0 70 70"><ellipse cx="35" cy="26" rx="18" ry="22" fill="#ec4899" stroke="#1e293b" stroke-width="3"/><path d="M31 48h8l-2 7h-4z" fill="#ec4899" stroke="#1e293b" stroke-width="3"/><path d="M35 55c-6 6 6 8 0 13" fill="none" stroke="#1e293b" stroke-width="3"/><path d="M26 16c2-4 5-5 8-5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
-      <div><b>Trainer Balon</b><span>Tiup balon, lihat tekanan, dan mainkan pompa!</span></div>
-    </div>
-    <div class="card menu c-blue" onclick="go('hid')">
-      <svg viewBox="0 0 70 70"><rect x="8" y="30" width="54" height="22" rx="4" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/><rect x="26" y="8" width="18" height="24" fill="#facc15" stroke="#1e293b" stroke-width="3"/><rect x="20" y="4" width="30" height="8" rx="2" fill="#f97316" stroke="#1e293b" stroke-width="3"/><circle cx="18" cy="60" r="5" fill="#1e293b"/><circle cx="52" cy="60" r="5" fill="#1e293b"/></svg>
-      <div><b>Trainer Hidrolik</b><span>Eksperimen gaya, piston, dan tekanan!</span></div>
-    </div>
-  </div>
-  <div class="mini-note">💡 Ayo coba! Pilih salah satu trainer untuk mulai bereksperimen.</div>
-</section>
 
-<!-- BALON -->
-<section class="view" id="v-balon">
-  <div class="bar"><button class="back" onclick="go('dash')">← Dashboard</button></div>
-  <h1>🎈 Eksperimen Balon Ceria</h1>
-  <p class="sub">Nyalakan pompa lalu amati perubahan tekanan udara.</p>
+<!-- ======================= -->
+<!-- HALAMAN DASHBOARD -->
+<!-- ======================= -->
+
+<section id="dashboard" class="view active">
+
+  <div class="hero">
+    <h1>Halo, Ilmuwan Cilik! 🎈</h1>
+    <p>
+      Pilih eksperimen yang ingin dilakukan.
+    </p>
+  </div>
+
   <div class="grid">
-    <div class="card val c-pink"><div class="t">🌬 Tekanan udara</div><span class="v" data-k="bme.p" data-d="1">—</span><span class="u">hPa</span></div>
-    <div class="card val c-teal"><div class="t">🌡 Suhu</div><span class="v" data-k="bme.t" data-d="1">—</span><span class="u">°C</span></div>
-  </div>
-  <div class="card c-green" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:14px">
-    <div><h2 style="margin:0">💨 Pompa udara</h2><div class="hint" style="margin:0">Mati otomatis setelah <span id="pumpMax">120</span> detik</div></div>
-    <button class="sw ctl" id="swPump" aria-label="Pompa udara"></button>
-  </div>
-  <div class="card c-blue stopwatch">
-    <div>
-      <h2 style="margin:0">⏱ Stopwatch pompa</h2>
-      <div class="time" id="pumpStopwatch">00:00.0</div>
-      <div class="hint" id="pumpTimerState" style="margin:0">Stopwatch mulai saat pompa menyala.</div>
+
+    <div class="card">
+      <h2>🎈 Trainer Balon</h2>
+      <p>Pengujian pompa dan tekanan udara.</p>
+
+      <button onclick="showPage('balon')">
+        Buka Trainer
+      </button>
     </div>
-    <div class="sw-actions">
-      <button class="b-orange ctl" id="btnResetStopwatch" type="button">↺ Reset</button>
+
+    <div class="card">
+      <h2>🛠 Trainer Hidrolik</h2>
+      <p>Kontrol suntikan dan pengukuran tekanan.</p>
+
+      <button onclick="showPage('hidrolik')">
+        Buka Trainer
+      </button>
     </div>
+
+    <div class="card">
+      <h2>⚙️ Pengaturan</h2>
+      <p>Konfigurasi waktu servo dan koneksi.</p>
+
+      <button onclick="showPage('pengaturan')">
+        Buka Pengaturan
+      </button>
+    </div>
+
   </div>
 </section>
 
-<!-- HIDROLIK -->
-<section class="view" id="v-hid">
-  <div class="bar"><button class="back" onclick="go('dash')">← Dashboard</button></div>
-  <h1>🛠️ Laboratorium Hidrolik</h1>
+<!-- ======================= -->
+<!-- TRAINER BALON -->
+<!-- ======================= -->
+
+<section id="balon" class="view">
+
+  <button class="btn-light"
+          onclick="showPage('dashboard')">
+    ← Kembali
+  </button>
+
+  <h1>🎈 Trainer Balon</h1>
+
   <div class="grid">
-    <div class="card val c-blue"><div class="t">⚖ Massa</div><span class="v" data-k="load.g" data-d="1">—</span><span class="u">g</span></div>
-    <div class="card val c-orange"><div class="t">💪 Gaya</div><span class="v" data-k="load.n" data-d="3">—</span><span class="u">N</span></div>
-    <div class="card val c-purple"><div class="t">📟 Transmitter</div><span class="v" data-k="tx.psi" data-d="2">—</span><span class="u">PSI</span></div>
-    <div class="card val c-green"><div class="t">📟 Transmitter</div><span class="v" data-k="tx.kpa" data-d="1">—</span><span class="u">kPa</span></div>
-  </div>
-  <div class="card c-yellow" style="margin-top:16px">
-    <h2>🎯 Posisi Suntikan <span class="pill" id="servoState">belum diketahui</span></h2>
-    <p class="hint">Pilih tujuan. ESP32 mengatur gerakan dari posisi sebelumnya menggunakan durasi kalibrasi yang tersimpan.</p>
-    <div class="actbtns" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-      <button class="b-green ctl pos-btn" id="btnPosAtas">⬆ Atas</button>
-      <button class="b-purple ctl pos-btn" id="btnPosTengah">● Tengah</button>
-      <button class="b-blue ctl pos-btn" id="btnPosBawah">⬇ Bawah</button>
-    </div>
-    <button class="b-red ctl" id="btnServoEmergency" style="width:100%;margin-top:12px">■ STOP DARURAT SERVO</button>
-    <div class="hint" id="servoPositionHint">Posisi awal belum diketahui. Buka Pengaturan → Kalibrasi Posisi Suntikan.</div>
-  </div>
 
-  <div class="grid two" style="margin-top:16px">
-    <div class="card c-blue">
-      <h2>🛢 Pressure Oil</h2>
-      <p class="hint" style="margin:0 0 6px">P = F ÷ A &nbsp;·&nbsp; F = m × g &nbsp;·&nbsp; A = π × d² ÷ 4</p>
-      <label>Diameter piston 1 (mm)</label><input type="number" id="oD1" value="33" min="1" step="0.1">
-      <label>Diameter piston 2 (mm)</label><input type="number" id="oD2" value="29" min="1" step="0.1">
-      <label>Percepatan gravitasi g (m/s²)</label><input type="number" id="oG" value="9.8" min="0.1" step="0.01">
-      <label>Massa dari load cell (g)</label>
-      <input type="text" id="oM" readonly value="—" style="background:#f1f5f9">
-      <button class="b-blue ctl" id="btnOil" style="width:100%;margin-top:14px">Calculate</button>
-      <div class="res" id="oRes"></div>
+    <div class="card">
+      <h3>🌡 Suhu</h3>
+      <div class="value">
+        <span id="suhu">—</span> °C
+      </div>
     </div>
 
-    <div class="card c-green">
-      <h2>🧱 Benda Padat</h2>
-      <p class="hint" style="margin:0 0 6px">P = F ÷ A &nbsp;·&nbsp; masukkan ukuran satu bidang benda yang menempel</p>
-      <label>Panjang bidang (cm)</label><input type="number" id="sP" min="0.1" step="0.1" value="4">
-      <label>Lebar bidang (cm)</label><input type="number" id="sL" min="0.1" step="0.1" value="4">
-      <label>Percepatan gravitasi g (m/s²)</label><input type="number" id="sG" value="9.8" min="0.1" step="0.01">
-      <label>Massa dari load cell (g)</label>
-      <input type="text" id="sM" readonly value="—" style="background:#f1f5f9">
-      <button class="b-green ctl" id="btnSol" style="width:100%;margin-top:14px">Calculate</button>
-      <div class="res" id="sRes"></div>
+    <div class="card">
+      <h3>🌬 Tekanan Udara</h3>
+      <div class="value">
+        <span id="tekananUdara">—</span> hPa
+      </div>
     </div>
+
   </div>
-  <p class="hint">Tombol Calculate memakai massa load cell pada saat ditekan. Hitung Pressure Oil dan Benda Padat pada waktu percobaan masing-masing.</p>
+
+  <div class="card">
+
+    <h2>💨 Kontrol Pompa</h2>
+
+    <button class="btn-green"
+            onclick="sendCommand('pump','on')">
+      ON
+    </button>
+
+    <button class="btn-red"
+            onclick="sendCommand('pump','off')">
+      OFF
+    </button>
+
+    <p id="pumpStatus">Pompa: —</p>
+
+  </div>
+
+  <div class="card">
+
+    <h2>⏱ Stopwatch Pompa</h2>
+
+    <div class="stopwatch"
+         id="pumpStopwatch">
+      00:00.0
+    </div>
+
+    <button class="btn-orange"
+            onclick="sendCommand('pump_reset','1')">
+      ↺ Reset
+    </button>
+
+    <p class="hint">
+      Waktu stopwatch disinkronkan
+      dengan ESP32.
+    </p>
+
+  </div>
+
 </section>
 
+<!-- ======================= -->
+<!-- TRAINER HIDROLIK -->
+<!-- ======================= -->
+
+<section id="hidrolik" class="view">
+
+  <button class="btn-light"
+          onclick="showPage('dashboard')">
+    ← Kembali
+  </button>
+
+  <h1>🛠 Trainer Hidrolik</h1>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>⚖ Massa</h3>
+      <div class="value">
+        <span id="massa">—</span> g
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>💪 Gaya</h3>
+      <div class="value">
+        <span id="gaya">—</span> N
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📟 Tekanan Transmitter</h3>
+      <div class="value">
+        <span id="tekananPSI">—</span> PSI
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📟 Tekanan Transmitter</h3>
+      <div class="value">
+        <span id="tekananKPA">—</span> kPa
+      </div>
+    </div>
+
+  </div>
+
+  <!-- KONTROL SERVO BARU -->
+
+  <div class="card">
+
+    <h2>🎮 Kontrol Suntikan</h2>
+
+    <div class="controls">
+
+      <button
+        class="btn-green"
+        onclick="servoControl('naik')">
+        ▲ NAIK
+      </button>
+
+      <button
+        class="btn-red"
+        onclick="servoControl('stop')">
+        ■ STOP
+      </button>
+
+      <button
+        class="btn-blue"
+        onclick="servoControl('turun')">
+        ▼ TURUN
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- PRESSURE OIL -->
+
+  <div class="card">
+
+    <h2>🛢 Pressure Oil</h2>
+
+    <label>Diameter Piston 1 (mm)</label>
+    <input id="d1" type="number" value="29">
+
+    <label>Diameter Piston 2 (mm)</label>
+    <input id="d2" type="number" value="33">
+
+    <label>Gravitasi (m/s²)</label>
+    <input id="gravity" type="number"
+           value="9.8" step="0.01">
+
+    <button onclick="calculateOil()">
+      Calculate
+    </button>
+
+    <div id="oilResult" class="result">
+      Hasil perhitungan akan muncul di sini.
+    </div>
+
+  </div>
+
+  <!-- BENDA PADAT -->
+
+  <div class="card">
+
+    <h2>🧱 Benda Padat</h2>
+
+    <label>Panjang (cm)</label>
+    <input id="panjang" type="number" value="4">
+
+    <label>Lebar (cm)</label>
+    <input id="lebar" type="number" value="4">
+
+    <button onclick="calculateSolid()">
+      Calculate
+    </button>
+
+    <div id="solidResult" class="result">
+      Hasil perhitungan akan muncul di sini.
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ======================= -->
 <!-- PENGATURAN -->
-<section class="view" id="v-set">
-  <div class="bar"><button class="back" onclick="go('dash')">← Dashboard</button></div>
-  <h1>⚙ Pengaturan Alat</h1>
-  <div class="grid two">
-    <div class="card c-orange">
-      <h2>🔌 Koneksi Sensor (MQTT)</h2>
-      <p class="hint" style="margin:0 0 8px">Koneksi berjalan otomatis saat dashboard dibuka. Ubah data berikut hanya jika konfigurasi broker berubah.</p>
-      <label>Broker</label><input type="text" id="cHost">
-      <label>Port WebSocket</label><input type="number" id="cPort">
-      <label>Username</label><input type="text" id="cUser" autocomplete="username">
-      <label>Password Sensor</label><input type="password" id="cPass" autocomplete="current-password">
-      <label>Topik dasar</label><input type="text" id="cBase">
-      <button class="b-blue" id="btnConn" style="width:100%;margin-top:14px">Simpan &amp; Sambungkan Ulang</button>
-      <div class="err" id="connErr"></div>
-    </div>
-    <div class="card c-teal">
-      <h2>Kalibrasi &amp; sistem</h2>
-      <div style="display:flex;gap:6px;margin-bottom:8px"><span class="pill" id="sBme">BME280</span><span class="pill" id="sAds">ADS1115</span><span class="pill" id="sHx">HX711</span></div>
-      <div class="rows"><div><span>Firmware</span><b id="iFw">—</b></div><div><span>Waktu aktif</span><b id="iUp">—</b></div><div><span>Faktor kalibrasi</span><b data-k="cal">—</b></div></div>
-      <div class="inl" style="margin-top:12px"><button class="ctl" id="btnTare">Tare</button><button class="ctl" id="btnRestart">Restart</button></div>
-      <label>Kalibrasi dengan massa acuan (gram)</label>
-      <div class="inl"><input type="number" id="calGram" min="1" step="0.1" placeholder="mis. 500"><button class="b-purple ctl" id="btnCal">Kalibrasi</button></div>
-      <div class="hint">Kosongkan load cell → Tare → letakkan massa acuan → isi nilainya → Kalibrasi.</div>
-    </div>
-    <div class="card c-purple">
-      <h2>🎯 Kalibrasi Posisi Suntikan</h2>
-      <p class="hint">Servo 360° tidak memiliki sensor posisi. Masukkan waktu gerak setiap ruas. Nilai disimpan di ESP32 dan bertahan setelah restart.</p>
-      <label>Bawah → Tengah (ms)</label><input type="number" id="calBT" min="50" max="15000" step="10" value="700">
-      <label>Tengah → Atas (ms)</label><input type="number" id="calTA" min="50" max="15000" step="10" value="700">
-      <label>Atas → Tengah (ms)</label><input type="number" id="calAT" min="50" max="15000" step="10" value="700">
-      <label>Tengah → Bawah (ms)</label><input type="number" id="calTB" min="50" max="15000" step="10" value="700">
-      <button class="b-purple ctl" id="btnSavePosCal" style="width:100%;margin-top:12px">Simpan Kalibrasi ke ESP32</button>
-      <div class="hint">Untuk menentukan durasi, gunakan gerakan manual pendek di bawah; awasi piston agar tidak menabrak batas.</div>
-      <label>Durasi gerak manual (ms)</label><input type="number" id="jogMs" min="50" max="3000" step="50" value="200">
-      <div class="inl" style="margin-top:10px;flex-wrap:wrap">
-        <button class="b-green ctl" id="btnJogUp">▲ Jog Naik</button>
-        <button class="b-blue ctl" id="btnJogDown">▼ Jog Turun</button>
-        <button class="b-red ctl" id="btnJogStop">■ Stop</button>
-      </div>
-      <label>Set referensi posisi fisik (tanpa menggerakkan servo)</label>
-      <div class="inl" style="flex-wrap:wrap">
-        <button class="ctl" id="refBawah">Set sebagai Bawah</button>
-        <button class="ctl" id="refTengah">Set sebagai Tengah</button>
-        <button class="ctl" id="refAtas">Set sebagai Atas</button>
-      </div>
-      <p class="hint">Atur suntikan secara fisik hingga tepat pada salah satu posisi, hentikan servo, lalu tekan tombol referensi sesuai posisi nyata. Ulangi referensi setelah reboot, jog, atau STOP darurat.</p>
-      <div class="rows"><div><span>Posisi terkonfirmasi</span><b id="calPosNow">Belum diketahui</b></div><div><span>Target</span><b id="calPosTarget">—</b></div></div>
-    </div>
-    <div class="card c-orange">
-      <h2>WiFi <button class="ctl" id="btnScan" style="padding:4px 10px;font-size:12px">Pindai</button></h2>
-      <div class="rows"><div><span>Tersambung ke</span><b id="wSsid">—</b></div><div><span>IP</span><b data-k="wifi.ip">—</b></div><div><span>Sinyal</span><b><span data-k="wifi.rssi" data-d="0">—</span> dBm</b></div></div>
-      <div class="nets" id="nets" hidden></div>
-      <label>SSID baru</label><input type="text" id="newSsid" maxlength="32">
-      <label>Password</label><input type="password" id="newPass" maxlength="63" placeholder="Kosongkan jika terbuka">
-      <button class="b-orange ctl" id="btnWifi" style="width:100%;margin-top:12px">Terapkan WiFi</button>
-      <div class="hint">Jika gagal tersambung dalam 15 detik, alat kembali ke WiFi lama.</div>
-    </div>
+<!-- ======================= -->
+
+<section id="pengaturan" class="view">
+
+  <button class="btn-light"
+          onclick="showPage('dashboard')">
+    ← Kembali
+  </button>
+
+  <h1>⚙️ Pengaturan</h1>
+
+  <div class="card">
+
+    <h2>⏱ Kalibrasi Waktu Servo</h2>
+
+    <p class="hint">
+      Atur lama putaran servo untuk arah
+      naik dan turun secara terpisah.
+    </p>
+
+    <label>Durasi Naik (detik)</label>
+
+    <input
+      type="number"
+      id="servoUpTime"
+      min="0.1"
+      max="600"
+      step="0.1"
+      value="600"
+    >
+
+    <label>Durasi Turun (detik)</label>
+
+    <input
+      type="number"
+      id="servoDownTime"
+      min="0.1"
+      max="600"
+      step="0.1"
+      value="600"
+    >
+
+    <button
+      class="btn-purple"
+      onclick="saveServoSettings()">
+      💾 Simpan Pengaturan
+    </button>
+
+    <p id="servoConfigStatus" class="hint">
+      Nilai akan disimpan ke ESP32.
+    </p>
+
   </div>
-  <div class="card c-purple" style="margin-top:16px"><h2>Log kejadian</h2><div class="log" id="log"></div></div>
+
+  <div class="card">
+
+    <h2>⚖ Kalibrasi Load Cell</h2>
+
+    <button onclick="sendCommand('tare','1')">
+      Nol-kan Load Cell
+    </button>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🌐 Koneksi MQTT</h2>
+
+    <label>Host</label>
+    <input id="mqttHost" type="text"
+      value="f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud">
+
+    <label>Port WebSocket TLS</label>
+    <input id="mqttPort" type="number"
+           value="8884">
+
+    <label>Username</label>
+    <input id="mqttUser" type="text"
+           placeholder="Username MQTT">
+
+    <label>Password</label>
+    <input id="mqttPass" type="password"
+           placeholder="Password MQTT">
+
+    <button onclick="connectMQTT()">
+      Hubungkan MQTT
+    </button>
+
+    <p class="hint">
+      ESP32 memakai port 8883,
+      sedangkan browser memakai
+      WebSocket TLS port 8884.
+    </p>
+
+  </div>
+
 </section>
+
 </main>
-<div class="toast" id="toast"></div>
 
 <script>
-const $=s=>document.querySelector(s);
-const KEY='pascal_cfg_v2';
-const DEF={host:'f84ce95af63a4865acc74f0d000a1e4a.s1.eu.hivemq.cloud',port:8884,user:'sabrok',pass:'Nugroho12345',base:'pascal/trainer'};
-let cfg={...DEF};try{cfg={...DEF,...JSON.parse(localStorage.getItem(KEY)||'{}')};if(!cfg.pass)cfg.pass=DEF.pass}catch(e){}
-let client=null,mqttUp=false,devOnline=false,lastTel=0,tel=null,cur='conn';
+// ========================================
+// MQTT
+// ========================================
 
-// Stopwatch berbasis durasi dari ESP32, bukan waktu klik di browser.
-// Di antara telemetry, performance.now() menghaluskan tampilan pada interval 100 ms.
-let pumpRunning=false,pumpElapsedMs=0,pumpSyncAt=null,pumpHasSync=false;
-let pumpPending=false,pumpResetPending=false,pumpWatchInterval=null;
-function stopwatchElapsed(){
-  const fresh=pumpSyncAt!==null && performance.now()-pumpSyncAt<=6000;
-  return pumpElapsedMs+(pumpRunning&&fresh?performance.now()-pumpSyncAt:0);
+let mqttClient = null;
+let mqttConnected = false;
+
+const BASE = "pascal/trainer";
+
+let telemetry = null;
+let lastTelemetryAt = 0;
+
+let pumpElapsed = 0;
+let pumpRunning = false;
+let pumpSyncAt = performance.now();
+
+function showPage(page) {
+  document.querySelectorAll(".view").forEach(
+    el => el.classList.remove("active")
+  );
+
+  document.getElementById(page)
+    .classList.add("active");
 }
-function renderStopwatch(){
-  const total=Math.max(0,stopwatchElapsed());
-  const tenths=Math.floor(total/100);
-  const minutes=Math.floor(tenths/600);
-  const seconds=Math.floor((tenths%600)/10);
-  const tenth=tenths%10;
-  $('#pumpStopwatch').textContent=String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0')+'.'+tenth;
-  const fresh=mqttUp&&devOnline&&pumpHasSync&&pumpSyncAt!==null&&performance.now()-pumpSyncAt<=6000;
-  $('#pumpTimerState').textContent=!pumpHasSync?'Menunggu waktu dari ESP32…':
-    !fresh?'Koneksi/data tertunda · menunggu sinkronisasi':
-    pumpResetPending?'Menunggu konfirmasi reset dari alat…':
-    pumpPending?'Menunggu konfirmasi pompa dari alat…':
-    pumpRunning?'Pompa menyala · waktu ESP32':'Pompa mati · stopwatch berhenti';
+
+function setConnectionStatus(connected) {
+  const el =
+    document.getElementById("connectionStatus");
+
+  el.textContent =
+    connected ? "MQTT Terhubung" : "Offline";
+
+  el.classList.toggle(
+    "online",
+    connected
+  );
 }
-function updatePumpStopwatch(t){
-  // Hanya terima nilai otoritatif ESP32; web tidak pernah mereset waktu lokal sendiri.
-  if(typeof t.pump_elapsed_ms==='number' && Number.isFinite(t.pump_elapsed_ms) && t.pump_elapsed_ms>=0){
-    pumpElapsedMs=t.pump_elapsed_ms;
-    pumpRunning=!!t.pump;
-    pumpSyncAt=performance.now();
-    pumpHasSync=true;
+
+function connectMQTT() {
+  const host =
+    document.getElementById("mqttHost")
+      .value.trim();
+
+  const port =
+    Number(
+      document.getElementById("mqttPort").value
+    );
+
+  const user =
+    document.getElementById("mqttUser").value;
+
+  const pass =
+    document.getElementById("mqttPass").value;
+
+  if (!host || !port || !user || !pass) {
+    alert("Lengkapi konfigurasi MQTT.");
+    return;
   }
-  renderStopwatch();
-}
-function resetPumpStopwatch(){
-  if(pumpResetPending)return;
-  if(send('pump_reset','1')){
-    pumpResetPending=true;
-    renderStopwatch();
-    setTimeout(()=>{if(pumpResetPending){pumpResetPending=false;renderStopwatch();toast('Belum ada konfirmasi reset. Periksa koneksi alat.',true)}},6000);
+
+  if (mqttClient) {
+    mqttClient.end(true);
   }
-}
 
-const get=(o,p)=>p.split('.').reduce((a,k)=>a==null?null:a[k],o);
-const fmt=(v,d=0,s=1)=>(v==null||isNaN(v))?'—':(Number(v)*s).toFixed(d);
-const num=(v,d=3)=>{const n=+v;return isFinite(n)?(Math.abs(n)>=1e6||(n!==0&&Math.abs(n)<0.01)?n.toExponential(2):+n.toFixed(d)):'—'};
-function toast(m,e){const d=document.createElement('div');if(e)d.className='e';d.textContent=m;$('#toast').appendChild(d);setTimeout(()=>d.remove(),4500)}
-function log(m,c){const d=document.createElement('div');d.textContent=new Date().toLocaleTimeString('id-ID')+'  '+m;if(c)d.className=c;$('#log').prepend(d);while($('#log').children.length>100)$('#log').lastChild.remove()}
-function chip(id,c,t){const e=$(id);e.className='chip '+c;e.textContent=t}
-function fmtUp(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return(h?h+' j ':'')+m+' mnt '+(s%60)+' dtk'}
-function go(v){
-  cur=v;document.querySelectorAll('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
-  $('#btnSet').style.display='';window.scrollTo(0,0);
-}
+  const url = `wss://${host}:${port}/mqtt`;
 
-/* ---- koneksi ---- */
-function fillForm(){$('#cHost').value=cfg.host;$('#cPort').value=cfg.port;$('#cUser').value=cfg.user;$('#cPass').value=cfg.pass;$('#cBase').value=cfg.base}
-function connect(){
-  if(client){try{client.end(true)}catch(e){}}
-  $('#connErr').textContent='';$('#btnConn').disabled=true;$('#btnConn').textContent='Menyambung…';
-  chip('#chipMqtt','warn','MQTT: menyambung…');
-  client=mqtt.connect(`wss://${cfg.host}:${cfg.port}/mqtt`,{username:cfg.user,password:cfg.pass,clientId:'web-'+Math.random().toString(16).slice(2,10),reconnectPeriod:3000,connectTimeout:10000,clean:true,keepalive:30});
-  client.on('connect',()=>{
-    mqttUp=true;chip('#chipMqtt','ok','MQTT: tersambung');log('Tersambung ke broker.','g');
-    const b=cfg.base;client.subscribe([`${b}/status`,`${b}/telemetry`,`${b}/info`,`${b}/event`,`${b}/wifi/scan`],{qos:1});
-    send('refresh','1');$('#btnConn').disabled=false;$('#btnConn').textContent='Hubungkan';
-    refreshUI();
+  mqttClient = mqtt.connect(url, {
+    username:user,
+    password:pass,
+    clientId:
+      "pressure-web-" +
+      Math.random().toString(16).slice(2),
+    clean:true,
+    reconnectPeriod:3000,
+    connectTimeout:10000
   });
-  client.on('close',()=>{mqttUp=false;chip('#chipMqtt','bad','MQTT: terputus');refreshUI()});
-  client.on('error',e=>{log('Error MQTT: '+e.message,'e');$('#connErr').textContent='Gagal tersambung: '+e.message+'. Periksa username, password, dan internet.';$('#btnConn').disabled=false;$('#btnConn').textContent='Hubungkan'});
-  client.on('message',onMsg);
-}
-function send(sub,p){
-  if(!client||!mqttUp){toast('Belum tersambung ke broker.',true);return false}
-  client.publish(`${cfg.base}/cmd/${sub}`,typeof p==='string'?p:JSON.stringify(p),{qos:1});return true;
-}
-function onMsg(topic,buf){
-  const sub=topic.slice(cfg.base.length+1),text=buf.toString();
-  if(sub==='status'){devOnline=text==='online';chip('#chipDev',devOnline?'ok':'bad','Alat: '+(devOnline?'online':'offline'));log('Alat '+(devOnline?'online':'offline'),devOnline?'g':'e');refreshUI();return}
-  let j;try{j=JSON.parse(text)}catch(e){return}
-  if(sub==='telemetry'){tel=j;lastTel=Date.now();renderTel(j)}
-  else if(sub==='info'){$('#iFw').textContent=j.fw+' · '+j.mac;$('#pumpMax').textContent=j.pump_max_s||'—'}
-  else if(sub==='event'){
-    if(j.type==='pump_reset')pumpResetPending=false;
-    if(j.type==='servo_cal' && j.ok)calFormDirty=false;
-    toast(j.msg,!j.ok);log(`[${j.type}] ${j.msg}`,j.ok?'g':'e');
-  }
-  else if(sub==='wifi/scan')renderNets(j.networks||[]);
-}
-function renderTel(t){
-  document.querySelectorAll('[data-k]').forEach(el=>{
-    const v=get(t,el.dataset.k);
-    el.textContent=el.dataset.d===undefined?(v==null?'—':v):fmt(v,+el.dataset.d,el.dataset.s?+el.dataset.s:1);
+
+  mqttClient.on("connect", () => {
+    mqttConnected = true;
+    setConnectionStatus(true);
+
+    mqttClient.subscribe(
+      BASE + "/telemetry"
+    );
+
+    mqttClient.subscribe(
+      BASE + "/event"
+    );
+
+    mqttClient.subscribe(
+      BASE + "/info"
+    );
+
+    sendCommand("refresh", "1");
   });
-  $('#wSsid').textContent=t.wifi.ssid||'—';
-  $('#iUp').textContent=fmtUp(t.up);
-  $('#swPump').classList.toggle('on',!!t.pump);
-  updatePumpStopwatch(t);
-  pumpPending=false;
-  // Reset dinyatakan selesai setelah telemetry menunjukkan nilai baru (event bisa datang lebih dulu).
-  if(pumpResetPending&&t.pump_elapsed_ms<1500)pumpResetPending=false;
-  const sv=t.servo||{};
-  const posLabel=p=>({atas:'Atas',tengah:'Tengah',bawah:'Bawah'})[p]||'Belum diketahui';
-  const ss=$('#servoState');ss.textContent=sv.moving?'Bergerak ke '+posLabel(sv.target):posLabel(sv.position);
-  ss.className='pill'+(sv.moving?' ok':'');
-  $('#servoPositionHint').textContent=sv.moving?'Sedang menuju '+posLabel(sv.target)+'…':
-      sv.position==='unknown'?'Posisi belum diketahui. Referensikan di Pengaturan sebelum memilih tujuan.':
-      'Posisi saat ini: '+posLabel(sv.position)+'. Pilih posisi tujuan.';
-  $('#calPosNow').textContent=posLabel(sv.position);$('#calPosTarget').textContent=sv.moving?posLabel(sv.target):'—';
-  document.querySelectorAll('.pos-btn').forEach(b=>b.disabled=!(mqttUp&&devOnline)||!!sv.moving||sv.position==='unknown');
-  if(Array.isArray(sv.cal_ms)&&sv.cal_ms.length===4&&!calFormDirty){
-    ['#calBT','#calTA','#calAT','#calTB'].forEach((id,i)=>$(id).value=sv.cal_ms[i]);
-  }
-  [['#sBme',t.sensors.bme],['#sAds',t.sensors.ads],['#sHx',t.sensors.hx]].forEach(([id,ok])=>{const e=$(id);e.className='pill '+(ok?'ok':'bad');e.textContent=e.textContent.split(' ')[0]+(ok?' ✓':' ✗')});
-  const m=fmt(t.load.g,1)+' g';$('#oM').value=m;$('#sM').value=m;
-  $('#lastUp').textContent=new Date().toLocaleTimeString('id-ID');
-}
-function renderNets(list){
-  const box=$('#nets');box.hidden=false;box.innerHTML='';
-  if(!list.length){box.textContent='Tidak ada jaringan ditemukan.'}
-  list.sort((a,b)=>b.rssi-a.rssi).forEach(n=>{if(!n.ssid)return;const b=document.createElement('button');
-    const l=document.createElement('span');l.textContent=(n.enc?'🔒 ':'')+n.ssid;const r=document.createElement('span');r.textContent=n.rssi+' dBm';b.append(l,r);
-    b.onclick=()=>{$('#newSsid').value=n.ssid;$('#newPass').focus()};box.appendChild(b)});
-  $('#btnScan').disabled=false;$('#btnScan').textContent='Pindai';
-}
-function refreshUI(){const on=mqttUp&&devOnline;document.querySelectorAll('.ctl').forEach(b=>b.disabled=!on);
-  if(!on){pumpPending=false;pumpResetPending=false;}
-  document.querySelectorAll('.pos-btn').forEach(b=>b.disabled=!on||!tel||!tel.servo||tel.servo.position==='unknown'||!!tel.servo.moving);
-  renderStopwatch();
-}
-setInterval(()=>{if(devOnline&&Date.now()-lastTel>6000)chip('#chipDev','warn','Alat: data tertunda')},2000);
 
-/* ---- perhitungan ---- */
-const getMass=()=>{if(!tel||tel.load.g==null){toast('Belum ada data massa dari load cell.',true);return null}return tel.load.g};
-$('#btnOil').onclick=()=>{
-  const g0=getMass();if(g0==null)return;
-  const d1=+$('#oD1').value,d2=+$('#oD2').value,G=+$('#oG').value;
-  if(!(d1>0&&d2>0&&G>0))return toast('Diameter dan gravitasi harus lebih dari 0.',true);
-  const m=g0/1000,F=m*G;
-  const A1=Math.PI*(d1/1000)**2/4,A2=Math.PI*(d2/1000)**2/4,P1=F/A1,P2=F/A2;
-  const r=$('#oRes');r.className='res show';r.style.setProperty('--c','var(--blue)');
-  r.innerHTML=`<div class="rows"><div><span>Massa (m)</span><b>${num(m,4)} kg</b></div><div><span>Gaya F = m × g</span><b>${num(F,4)} N</b></div>
-  <div><span>Luas piston 1 (d=${d1} mm)</span><b>${num(A1*1e4,3)} cm²</b></div><div><span>Luas piston 2 (d=${d2} mm)</span><b>${num(A2*1e4,3)} cm²</b></div></div>
-  <div class="big">P₁ = ${num(P1,1)} Pa</div><div class="big">P₂ = ${num(P2,1)} Pa</div>
-  <div class="hint">≈ ${num(P1/1000,2)} kPa dan ${num(P2/1000,2)} kPa</div>`;
-};
-$('#btnSol').onclick=()=>{
-  const g0=getMass();if(g0==null)return;
-  const G=+$('#sG').value,panjang=+$('#sP').value,lebar=+$('#sL').value;
-  if(!(G>0&&panjang>0&&lebar>0))return toast('Gravitasi, panjang, dan lebar bidang harus lebih dari 0.',true);
-  const m=g0/1000,F=m*G,A=(panjang*lebar)/1e4,P=F/A;
-  const r=$('#sRes');r.className='res show';r.style.setProperty('--c','var(--green)');
-  r.innerHTML=`<div class="rows">
-    <div><span>Massa (m)</span><b>${num(m,4)} kg</b></div>
-    <div><span>Gaya F = m × g</span><b>${num(F,4)} N</b></div>
-    <div><span>Luas bidang (A)</span><b>${num(panjang*lebar,2)} cm²</b></div>
-  </div>
-  <div class="big">Tekanan P = ${num(P,1)} Pa</div>
-  <div class="hint">Luas bidang kontak = ${num(A,6)} m²</div>`;
-};
+  mqttClient.on("close", () => {
+    mqttConnected = false;
+    setConnectionStatus(false);
+  });
 
-/* ---- kontrol ---- */
-$('#swPump').onclick=()=>{
-  if(pumpPending)return;
-  if(send('pump',tel&&tel.pump?'off':'on')){
-    pumpPending=true;renderStopwatch();
-    setTimeout(()=>{if(pumpPending){pumpPending=false;renderStopwatch()}},5000);
-  }
-};
-$('#btnResetStopwatch').onclick=resetPumpStopwatch;
-pumpWatchInterval=setInterval(renderStopwatch,100);
-renderStopwatch();
-let calFormDirty=false;
-['#calBT','#calTA','#calAT','#calTB'].forEach(id=>$(id).oninput=()=>{calFormDirty=true});
-function sendPosition(position){
-  if(!tel||!tel.servo||tel.servo.position==='unknown')return toast('Set referensi posisi fisik di Pengaturan terlebih dahulu.',true);
-  send('servo_position',{position});
-}
-$('#btnPosAtas').onclick=()=>sendPosition('atas');
-$('#btnPosTengah').onclick=()=>sendPosition('tengah');
-$('#btnPosBawah').onclick=()=>sendPosition('bawah');
-function emergencyServoStop(){send('servo_stop','1')}
-$('#btnServoEmergency').onclick=emergencyServoStop;
-$('#btnJogStop').onclick=emergencyServoStop;
-$('#btnSavePosCal').onclick=()=>{
-  const ids=['#calBT','#calTA','#calAT','#calTB'];const val=ids.map(id=>Number($(id).value));
-  if(val.some(v=>!Number.isInteger(v)||v<50||v>15000))return toast('Keempat durasi harus bilangan bulat 50–15000 ms.',true);
-  if(send('servo_cal',{bawah_tengah:val[0],tengah_atas:val[1],atas_tengah:val[2],tengah_bawah:val[3]})){
-    calFormDirty=false;toast('Kalibrasi dikirim. Tunggu konfirmasi ESP32.');
-  }
-};
-function jog(dir){
-  const ms=Number($('#jogMs').value);
-  if(!Number.isInteger(ms)||ms<50||ms>3000)return toast('Durasi jog harus 50–3000 ms.',true);
-  if(!confirm('Pastikan piston tidak berada di ujung mekanik. Jalankan jog '+dir+' selama '+ms+' ms?'))return;
-  send('servo_jog',{dir,ms});
-}
-$('#btnJogUp').onclick=()=>jog('up');
-$('#btnJogDown').onclick=()=>jog('down');
-function setRef(position){
-  if(confirm('Apakah posisi FISIK suntikan sekarang benar-benar '+position.toUpperCase()+' dan servo sedang diam?'))
-    send('servo_reference',{position});
-}
-$('#refBawah').onclick=()=>setRef('bawah');
-$('#refTengah').onclick=()=>setRef('tengah');
-$('#refAtas').onclick=()=>setRef('atas');
-$('#btnTare').onclick=()=>{if(confirm('Pastikan load cell TANPA beban. Lanjutkan tare?'))send('tare','1')};
-$('#btnRestart').onclick=()=>{if(confirm('Restart perangkat?'))send('restart','1')};
-$('#btnCal').onclick=()=>{const g=parseFloat($('#calGram').value);if(!(g>0))return toast('Isi massa acuan lebih dari 0.',true);
-  if(confirm(`Kalibrasi dengan massa acuan ${g} g? Pastikan massa itu ada di load cell.`))send('calibrate',{gram:g})};
-$('#btnScan').onclick=()=>{$('#btnScan').disabled=true;$('#btnScan').textContent='Memindai…';send('wifi_scan','1');
-  setTimeout(()=>{$('#btnScan').disabled=!(mqttUp&&devOnline);$('#btnScan').textContent='Pindai'},12000)};
-$('#btnWifi').onclick=()=>{const ssid=$('#newSsid').value.trim(),pass=$('#newPass').value;
-  if(!ssid)return toast('Isi nama WiFi (SSID).',true);
-  if(pass&&(pass.length<8||pass.length>63))return toast('Password harus 8–63 karakter.',true);
-  if(confirm(`Ganti WiFi alat ke "${ssid}"?`)){send('wifi',{ssid,pass});log(`Perintah ganti WiFi ke "${ssid}" dikirim.`)}};
+  mqttClient.on("error", err => {
+    console.error("MQTT error:", err);
+  });
 
-/* ---- mulai ---- */
-$('#btnConn').onclick=()=>{
-  cfg={host:$('#cHost').value.trim(),port:+$('#cPort').value,user:$('#cUser').value.trim(),pass:$('#cPass').value,base:$('#cBase').value.trim().replace(/\/+$/,'')};
-  if(!cfg.host||!(cfg.port>0)||!cfg.user||!cfg.pass||!cfg.base){$('#connErr').textContent='Lengkapi semua kolom koneksi dengan benar.';return}
-  try{localStorage.setItem(KEY,JSON.stringify(cfg))}catch(e){}
-  connect();
-};
-fillForm();refreshUI();
-connect();
+  mqttClient.on("message",
+    (topic, payload) => {
+
+    let data;
+
+    try {
+      data = JSON.parse(payload.toString());
+    }
+    catch(e) {
+      return;
+    }
+
+    if (topic.endsWith("/telemetry")) {
+      updateTelemetry(data);
+    }
+
+    if (topic.endsWith("/event")) {
+      console.log("EVENT:", data);
+
+      if (data.type === "servo_config") {
+        document.getElementById(
+          "servoConfigStatus"
+        ).textContent = data.msg;
+      }
+    }
+
+    if (topic.endsWith("/info")) {
+      updateInfo(data);
+    }
+  });
+}
+
+function sendCommand(command, payload) {
+  if (!mqttConnected || !mqttClient) {
+    alert("MQTT belum terhubung.");
+    return false;
+  }
+
+  const data =
+    typeof payload === "string"
+      ? payload
+      : JSON.stringify(payload);
+
+  mqttClient.publish(
+    `${BASE}/cmd/${command}`,
+    data,
+    {qos:1, retain:false}
+  );
+
+  return true;
+}
+
+// ========================================
+// KONTROL SERVO
+// ========================================
+
+function servoControl(arah) {
+  // STOP dikirim langsung.
+  if (arah === "stop") {
+    sendCommand("servo", "stop");
+    return;
+  }
+
+  if (arah === "naik") {
+    sendCommand("servo", "naik");
+  }
+
+  else if (arah === "turun") {
+    sendCommand("servo", "turun");
+  }
+}
+
+// ========================================
+// PENGATURAN WAKTU SERVO
+// ========================================
+
+function saveServoSettings() {
+  const naik = Number(
+    document.getElementById(
+      "servoUpTime"
+    ).value
+  );
+
+  const turun = Number(
+    document.getElementById(
+      "servoDownTime"
+    ).value
+  );
+
+  if (
+    !Number.isFinite(naik) ||
+    !Number.isFinite(turun) ||
+    naik < 0.1 ||
+    turun < 0.1 ||
+    naik > 600 ||
+    turun > 600
+  ) {
+    alert(
+      "Durasi harus 0.1 sampai 600 detik."
+    );
+    return;
+  }
+
+  const data = {
+    up_ms:Math.round(naik * 1000),
+    down_ms:Math.round(turun * 1000)
+  };
+
+  if (sendCommand("servo_config", data)) {
+    document.getElementById(
+      "servoConfigStatus"
+    ).textContent =
+      "Menunggu konfirmasi ESP32...";
+  }
+}
+
+function updateInfo(data) {
+  if (data.servo_up_ms != null) {
+    document.getElementById(
+      "servoUpTime"
+    ).value = data.servo_up_ms / 1000;
+  }
+
+  if (data.servo_down_ms != null) {
+    document.getElementById(
+      "servoDownTime"
+    ).value = data.servo_down_ms / 1000;
+  }
+}
+
+// ========================================
+// TELEMETRY
+// ========================================
+
+function setText(id, value, digit=1) {
+  document.getElementById(id).textContent =
+    typeof value === "number" &&
+    Number.isFinite(value)
+      ? value.toFixed(digit)
+      : "—";
+}
+
+function updateTelemetry(t) {
+  telemetry = t;
+  lastTelemetryAt = Date.now();
+
+  if (t.bme) {
+    setText("suhu", t.bme.t);
+    setText("tekananUdara", t.bme.p);
+  }
+
+  if (t.tx) {
+    setText("tekananPSI", t.tx.psi, 2);
+    setText("tekananKPA", t.tx.kpa);
+  }
+
+  if (t.load) {
+    setText("massa", t.load.g);
+    setText("gaya", t.load.n, 3);
+  }
+
+  document.getElementById(
+    "pumpStatus"
+  ).textContent =
+    t.pump ? "Pompa: ON" : "Pompa: OFF";
+
+  if (
+    typeof t.pump_elapsed_ms === "number"
+  ) {
+    pumpElapsed = t.pump_elapsed_ms;
+    pumpRunning = !!t.pump;
+    pumpSyncAt = performance.now();
+  }
+
+  if (t.servo) {
+    const servo = t.servo;
+
+    // Jangan menimpa input kalibrasi
+    // ketika sedang diedit pengguna.
+    const active = document.activeElement;
+
+    if (
+      active !== document.getElementById(
+        "servoUpTime"
+      )
+    ) {
+      document.getElementById(
+        "servoUpTime"
+      ).value = servo.up_ms / 1000;
+    }
+
+    if (
+      active !== document.getElementById(
+        "servoDownTime"
+      )
+    ) {
+      document.getElementById(
+        "servoDownTime"
+      ).value = servo.down_ms / 1000;
+    }
+  }
+}
+
+// ========================================
+// STOPWATCH
+// ========================================
+
+function updateStopwatch() {
+  let elapsed = pumpElapsed;
+
+  const syncAge =
+    performance.now() - pumpSyncAt;
+
+  if (
+    pumpRunning &&
+    mqttConnected &&
+    Date.now() - lastTelemetryAt < 6000
+  ) {
+    elapsed += syncAge;
+  }
+
+  const tenths = Math.floor(elapsed / 100);
+
+  const minute = Math.floor(tenths / 600);
+  const second = Math.floor(
+    (tenths % 600) / 10
+  );
+  const tenth = tenths % 10;
+
+  const text =
+    String(minute).padStart(2,"0") +
+    ":" +
+    String(second).padStart(2,"0") +
+    "." + tenth;
+
+  document.getElementById(
+    "pumpStopwatch"
+  ).textContent = text;
+}
+
+setInterval(updateStopwatch, 100);
+
+// ========================================
+// PERHITUNGAN PRESSURE OIL
+// ========================================
+
+function calculateOil() {
+  if (!telemetry || !telemetry.load) {
+    alert("Data load cell belum tersedia.");
+    return;
+  }
+
+  const massa =
+    telemetry.load.g / 1000;
+
+  const gravitasi =
+    Number(document.getElementById(
+      "gravity"
+    ).value);
+
+  const d1 =
+    Number(document.getElementById(
+      "d1"
+    ).value) / 1000;
+
+  const d2 =
+    Number(document.getElementById(
+      "d2"
+    ).value) / 1000;
+
+  if (
+    !(gravitasi > 0) ||
+    !(d1 > 0) ||
+    !(d2 > 0)
+  ) {
+    alert("Parameter tidak valid.");
+    return;
+  }
+
+  const F = massa * gravitasi;
+
+  const A1 = Math.PI * d1*d1 / 4;
+  const A2 = Math.PI * d2*d2 / 4;
+
+  const P1 = F / A1;
+  const P2 = F / A2;
+
+  document.getElementById(
+    "oilResult"
+  ).innerHTML = `
+    <div class="row">
+      <span>Gaya</span>
+      <b>${F.toFixed(4)} N</b>
+    </div>
+    <div class="row">
+      <span>Tekanan Piston 1</span>
+      <b>${P1.toFixed(2)} Pa</b>
+    </div>
+    <div class="row">
+      <span>Tekanan Piston 2</span>
+      <b>${P2.toFixed(2)} Pa</b>
+    </div>
+  `;
+}
+
+// ========================================
+// PERHITUNGAN BENDA PADAT
+// ========================================
+
+function calculateSolid() {
+  if (!telemetry || !telemetry.load) {
+    alert("Data load cell belum tersedia.");
+    return;
+  }
+
+  const massa =
+    telemetry.load.g / 1000;
+
+  const panjang =
+    Number(document.getElementById(
+      "panjang"
+    ).value);
+
+  const lebar =
+    Number(document.getElementById(
+      "lebar"
+    ).value);
+
+  if (!(panjang > 0) || !(lebar > 0)) {
+    alert("Luas penampang tidak valid.");
+    return;
+  }
+
+  const F = massa * 9.8;
+  const A = panjang * lebar / 10000;
+
+  const P = F / A;
+
+  document.getElementById(
+    "solidResult"
+  ).innerHTML = `
+    <div class="row">
+      <span>Gaya</span>
+      <b>${F.toFixed(4)} N</b>
+    </div>
+    <div class="row">
+      <span>Luas Penampang</span>
+      <b>${(A*10000).toFixed(2)} cm²</b>
+    </div>
+    <div class="row">
+      <span>Tekanan</span>
+      <b>${P.toFixed(2)} Pa</b>
+    </div>
+  `;
+}
 </script>
+
 </body>
 </html>
